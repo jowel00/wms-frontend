@@ -1,3 +1,19 @@
+WMS-FRONTEND/ (Raíz del Repo)
+├── public/              # Solo imágenes y el favicon
+├── src/
+│   ├── app/             # SOLO RUTAS (page.tsx, layout.tsx)
+│   │   ├── products/    # Página de gestión de productos
+│   │   ├── inventory/   # Página de stock
+│   │   └── warehouse/   # Página de bodegas
+│   ├── components/      # UI y Lógica visual
+│   ├── services/        # Llamadas a la API de Spring Boot
+│   ├── store/           # Estado global (Zustand)
+│   └── types/           # Interfaces TS (como inventory.ts)
+├── .env.local           # Variables de entorno
+├── next.config.ts
+├── package.json
+└── README.md
+
 # 🖥️ WMS Frontend - Smart Inventory Suite
 
 > **Interfaz de Operación Logística para DeRocha Store.**
