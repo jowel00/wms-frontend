@@ -1,69 +1,124 @@
-WMS-FRONTEND/ (Raíz del Repo)
-├── public/              # Solo imágenes y el favicon
-├── src/
-│   ├── app/             # SOLO RUTAS (page.tsx, layout.tsx)
-│   │   ├── products/    # Página de gestión de productos
-│   │   ├── inventory/   # Página de stock
-│   │   └── warehouse/   # Página de bodegas
-│   ├── components/      # UI y Lógica visual
-│   ├── services/        # Llamadas a la API de Spring Boot
-│   ├── store/           # Estado global (Zustand)
-│   └── types/           # Interfaces TS (como inventory.ts)
-├── .env.local           # Variables de entorno
-├── next.config.ts
-├── package.json
-└── README.md
-
-# 🖥️ WMS Frontend - Smart Inventory Suite
+# WMS Frontend — Smart Inventory Suite
 
 > **Interfaz de Operación Logística para DeRocha Store.**
+> Cliente web en **Next.js** + **TypeScript** para operarios de bodega, optimizado para dispositivos móviles y pistolas de escaneo.
 
-Este es el cliente web desarrollado en **Next.js 15** con **TypeScript**, diseñado para ser la herramienta principal de los operarios en bodega. Está optimizado para dispositivos móviles y pistolas de escaneo, priorizando la velocidad de captura sobre la estética compleja.
+---
 
-## 🚀 Guía de Inicio para Desarrolladores
+## Tech Stack
 
-### 1. Pre-requisitos
-- **Node.js 20+** y **npm** o **pnpm**.
-- Tener el **Backend (wms-core)** corriendo (vía Docker o local) para poder consumir la API.
+| Capa             | Tecnología                                      |
+|------------------|-------------------------------------------------|
+| Framework        | Next.js 16.1.6 (App Router)                     |
+| UI               | React 19 + Tailwind CSS v4                      |
+| Lenguaje         | TypeScript 5 (strict mode)                      |
+| Optimización     | React Compiler (`babel-plugin-react-compiler`)  |
+| Backend          | wms-core — Java 21 / Spring Boot 3.5.0          |
 
-### 2. Instalación
+---
+
+## Estructura del Proyecto
+
+```
+src/
+├── app/                   # Rutas (App Router de Next.js)
+│   ├── page.tsx           # Dashboard principal
+│   ├── layout.tsx         # Layout raíz
+│   └── products/
+│       └── bulk-upload/   # HU: Carga masiva de catálogo
+├── components/            # Componentes UI reutilizables
+├── services/              # Clientes HTTP hacia wms-core
+│   └── productService.ts  # bulkUpload, manejo de errores
+├── store/                 # Estado global (Zustand — próximamente)
+└── types/
+    └── inventory.ts       # Interfaces del dominio (Product, Owner, BulkUploadResponse)
+```
+
+---
+
+## Guía de Inicio Rápido
+
+### Pre-requisitos
+
+- **Node.js 20+**
+- Backend **wms-core** corriendo (local o Docker) en `http://localhost:8080`
+
+### Instalación
+
 ```bash
-git clone [URL-del-repo]
+git clone <URL-del-repo>
 cd wms-frontend
 npm install
+```
 
-3. Configuración de Entorno
-Copia el archivo de ejemplo y asegúrate de que la URL apunte a tu backend local:
+### Configuración de Entorno
 
+```bash
 cp .env.example .env.local
+# Edita .env.local y ajusta la URL del backend:
+# NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+```
 
-npm run dev
+### Desarrollo
 
-🧠 Reglas de Diseño de Interfaz (Scanner-First)
-Para que el operario sea eficiente, la UI debe seguir estas reglas inquebrantables:
+```bash
+npm run dev   # http://localhost:3000
+```
 
-Foco Automático: Al cargar una pantalla de acción (ej. Recepción), el cursor debe estar automáticamente en el campo de escaneo.
+### Build de Producción
 
-Paginación Obligatoria: Dado que manejamos 20,000 referencias, está prohibido cargar listas completas. Todo listado debe usar la paginación del servidor.
+```bash
+npm run build
+npm start
+```
 
-Feedback Visual/Sonoro: Cada escaneo exitoso debe mostrar un indicador verde; errores de SKU o ubicación deben mostrar un rojo vibrante y, si es posible, emitir un sonido de alerta.
+---
 
-Target Táctil: Los botones de acción deben tener un tamaño mínimo de 44x44px para facilitar su uso con guantes.
-___________________________________________________________
-📂 Estructura del Proyecto
-/src/components: UI Atoms (Botones, Inputs de scanner, Cards).
+## Docker Setup
 
-/src/app: Rutas y páginas (Estructuradas por dominio: /products, /inventory, /warehouse).
+> Asegúrate de que `wms-core` esté corriendo antes de iniciar el frontend.
 
-/src/services: Clientes de API (Axios/Fetch) centralizados.
+```bash
+# Levanta el backend (desde el repositorio wms-core)
+docker compose up -d
 
-/src/types: Interfaces de TypeScript compartidas.
-___________________________________________________________
-📡 Integración con Backend
-El frontend consume los servicios de wms-core (Java 21 / Spring Boot 3.5.0).
+# Verifica que el servicio responda
+curl http://localhost:8080/api/v1/health
+```
 
-Carga Masiva: POST /products/bulk-upload (Acepta archivos .csv).
+El frontend lee la variable `NEXT_PUBLIC_API_URL` para apuntar al backend. Para producción, configúrala en tu pipeline de CI/CD o en tu plataforma de despliegue (Vercel, Railway, etc.).
 
-Inventario: Endpoints basados en contenedores lógicos y eventos.
-___________________________________________________________
-Vision Boosters - Construyendo logística inteligente. 🚀
+---
+
+## Principios de Diseño — Scanner-First UI
+
+Esta interfaz está construida para operarios que trabajan con **pistolas de escaneo y guantes**. Cada decisión de UX sigue estas reglas:
+
+| Principio                  | Implementación                                                                    |
+|----------------------------|-----------------------------------------------------------------------------------|
+| **Foco Automático**        | El cursor se posiciona en el campo de escaneo al cargar cada pantalla de acción   |
+| **Paginación Obligatoria** | Prohibido cargar listas completas. Todo listado usa paginación del servidor (20 K+ referencias) |
+| **Feedback Visual**        | Escaneo exitoso → verde; SKU/ubicación inválidos → rojo vibrante + alerta sonora  |
+| **Target Táctil**          | Botones con tamaño mínimo de 44 × 44 px para uso con guantes                     |
+
+---
+
+## Integración con Backend (wms-core)
+
+| Endpoint                | Método             | Descripción                       |
+|-------------------------|--------------------|-----------------------------------|
+| `/products/bulk-upload` | `POST` (multipart) | Carga masiva de catálogo vía CSV  |
+| `/inventory`            | `GET`              | Consulta de stock por contenedor  |
+
+---
+
+## Rutas Disponibles
+
+| Ruta                    | Descripción                                  |
+|-------------------------|----------------------------------------------|
+| `/`                     | Dashboard con indicadores y accesos rápidos  |
+| `/products/bulk-upload` | Carga masiva de catálogo CSV                 |
+
+---
+
+*Vision Boosters — Construyendo logística inteligente.*
