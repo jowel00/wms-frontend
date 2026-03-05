@@ -11,7 +11,32 @@ export interface Product {
 export interface Owner {
   ownerId: string;
   name: string;
-  status: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  skuCount?: number;
+}
+
+export interface Warehouse {
+  warehouseId: string;
+  name: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  ownerId: string;
+  ownerName?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+export type LocationType = 'RACK' | 'BIN' | 'STAGING' | 'PACKING' | 'RETURNS';
+
+export interface Location {
+  locationId: string;
+  code: string;
+  type: LocationType;
+  aisle?: string;
+  rack?: string;
+  bin?: string;
+  warehouseId: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 // Para la HU de Carga Masiva
