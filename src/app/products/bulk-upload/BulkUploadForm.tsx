@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Toast } from './_components/Toast';
 import { DropZone } from './_components/DropZone';
 import { UploadResult } from './_components/UploadResult';
@@ -63,20 +65,21 @@ export function BulkUploadForm() {
       <form onSubmit={handleSubmit} noValidate>
         <DropZone key={dropZoneKey} onFileSelect={handleFileSelect} disabled={isUploading} />
 
-        <button
+        <Button
           type="submit"
           disabled={!file || isUploading}
-          className="mt-4 w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-black text-lg py-4 px-6 rounded-lg uppercase tracking-wider"
+          className="mt-4 w-full h-14 text-base font-black uppercase tracking-wider"
+          size="lg"
         >
           {isUploading ? (
-            <span className="flex items-center justify-center gap-3">
-              <Spinner />
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
               Subiendo archivo...
-            </span>
+            </>
           ) : (
             'Cargar CSV'
           )}
-        </button>
+        </Button>
       </form>
 
       {status === 'success' && successData && (
@@ -86,24 +89,5 @@ export function BulkUploadForm() {
         <UploadResult type="error" payload={errorPayload} />
       )}
     </>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg
-      className="h-5 w-5 animate-spin"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
   );
 }
