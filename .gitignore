@@ -137,3 +137,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local agent configuration
+.agents/
+.claude/skills/
+.claude/settings.local.json
