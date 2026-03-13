@@ -51,7 +51,7 @@ export function DataTable<T>({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody className="[&>tr]:transition-colors [&>tr:hover]:bg-[#94A3B8]/20">
+        <TableBody className="[&>tr]:transition-colors [&>tr:hover]:bg-primary/[7%]">
           {data.map((row) => {
             const clickable = onRowClick && (!isClickable || isClickable(row));
             return (
@@ -63,7 +63,7 @@ export function DataTable<T>({
                 isOptimistic?.(row)
                   ? 'opacity-50 pointer-events-none bg-primary/5 animate-pulse'
                   : clickable
-                    ? 'cursor-pointer hover:bg-[#94A3B8]/35'
+                    ? 'cursor-pointer hover:bg-primary/[13%]'
                     : undefined
               )}
             >

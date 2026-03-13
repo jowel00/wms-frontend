@@ -10,6 +10,8 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -29,9 +31,11 @@ const NAV_OPERATIONS = [
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  isDark: boolean;
+  onThemeToggle: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -87,8 +91,48 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         />
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="p-3 border-t border-sidebar-border shrink-0">
+      {/* Bottom controls */}
+      <div className="p-3 border-t border-sidebar-border shrink-0 space-y-1">
+        {/* Theme toggle */}
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onThemeToggle}
+                aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+                className={cn(
+                  'flex items-center justify-center w-full h-9 rounded-md',
+                  'text-sidebar-foreground/50 hover:text-white hover:bg-sidebar-accent',
+                  'transition-colors'
+                )}
+              >
+                {isDark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-semibold">
+              {isDark ? 'Modo claro' : 'Modo oscuro'}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            type="button"
+            onClick={onThemeToggle}
+            aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+            className={cn(
+              'flex items-center w-full h-9 rounded-md px-2 gap-2',
+              'text-sidebar-foreground/50 hover:text-white hover:bg-sidebar-accent',
+              'transition-colors'
+            )}
+          >
+            {isDark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {isDark ? 'Modo claro' : 'Modo oscuro'}
+            </span>
+          </button>
+        )}
+
+        {/* Collapse toggle */}
         <button
           type="button"
           onClick={onToggle}
