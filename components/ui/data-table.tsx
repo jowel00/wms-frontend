@@ -21,6 +21,8 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   keyExtractor: (row: T) => string;
   isOptimistic?: (row: T) => boolean;
+  onRowClick?: (row: T) => void;
+  isClickable?: (row: T) => boolean;
 }
 
 export function DataTable<T>({
@@ -28,12 +30,14 @@ export function DataTable<T>({
   columns,
   keyExtractor,
   isOptimistic,
+  onRowClick,
+  isClickable,
 }: DataTableProps<T>) {
   return (
     <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow className="border-b-0 bg-primary">
+          <TableRow className="border-b-0 bg-primary hover:bg-primary">
             {columns.map((col) => (
               <TableHead
                 key={col.key}
@@ -47,14 +51,20 @@ export function DataTable<T>({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {data.map((row) => (
+        <TableBody className="[&>tr]:transition-colors [&>tr:hover]:bg-[#94A3B8]/20">
+          {data.map((row) => {
+            const clickable = onRowClick && (!isClickable || isClickable(row));
+            return (
             <TableRow
               key={keyExtractor(row)}
+              onClick={clickable ? () => onRowClick(row) : undefined}
               className={cn(
-                'border-b border-primary/10',
-                isOptimistic?.(row) &&
-                  'opacity-50 pointer-events-none bg-primary/5 animate-pulse'
+                'group border-b border-primary/10',
+                isOptimistic?.(row)
+                  ? 'opacity-50 pointer-events-none bg-primary/5 animate-pulse'
+                  : clickable
+                    ? 'cursor-pointer hover:bg-[#94A3B8]/35'
+                    : undefined
               )}
             >
               {columns.map((col) => (
@@ -66,7 +76,8 @@ export function DataTable<T>({
                 </TableCell>
               ))}
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

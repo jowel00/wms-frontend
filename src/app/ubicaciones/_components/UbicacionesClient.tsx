@@ -2,14 +2,14 @@
 
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { MapPin, Plus, AlertCircle } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { MapPin, Rows3, Archive, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useLocations } from '@/hooks/useLocations';
-import { createLocation, updateLocation } from '@/src/app/actions/locations';
 import { WarehouseSelector } from './WarehouseSelector';
 import { UbicacionesTable } from './UbicacionesTable';
+import { DrilldownBreadcrumb } from './DrilldownBreadcrumb';
+import { createLocation } from '@/src/app/actions/locations';
 import type { Location, Warehouse } from '@/src/types/inventory';
 import type { LocationFormValues } from '@/src/lib/validations/locations';
 
@@ -18,89 +18,136 @@ const UbicacionDialog = dynamic(
   { loading: () => null }
 );
 
-type OptimisticAction =
-  | { type: 'add'; location: Location }
-  | { type: 'update'; location: Location };
-
 interface UbicacionesClientProps {
   warehouses: Warehouse[];
   locations: Location[];
-  initialSearch: string;
-  initialWarehouseId: string;
+  warehouseId: string;
+  aisleId?: string;
+  aisleCode?: string;
+  rackId?: string;
+  rackCode?: string;
+}
+
+type DrillLevel = 'WAREHOUSE' | 'PASILLO' | 'RACK' | 'BIN';
+
+function getLevel(warehouseId: string, aisleId?: string, rackId?: string): DrillLevel {
+  if (!warehouseId) return 'WAREHOUSE';
+  if (rackId) return 'BIN';
+  if (aisleId) return 'RACK';
+  return 'PASILLO';
 }
 
 function UbicacionesClientInner({
   warehouses,
   locations,
-  initialSearch,
-  initialWarehouseId,
+  warehouseId,
+  aisleId,
+  aisleCode,
+  rackId,
+  rackCode,
 }: UbicacionesClientProps) {
-  const [searchPending, startSearchTransition] = useTransition();
+  const router = useRouter();
+  const pathname = usePathname();
   const [, startActionTransition] = useTransition();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [optimisticLocations, dispatchOptimistic] = useOptimistic(
     locations,
-    (state: Location[], action: OptimisticAction) => {
-      if (action.type === 'add') return [...state, action.location];
-      return state.map((l) =>
-        l.locationId === action.location.locationId ? action.location : l
-      );
-    }
+    (state: Location[], newLoc: Location) => [...state, newLoc]
   );
 
-  // Hook recibe la lista optimista — un único useState interno maneja el search
-  const { search, setSearch, filtered: optimisticFiltered } = useLocations(optimisticLocations, initialSearch);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const level = getLevel(warehouseId, aisleId, rackId);
+  const warehouse = warehouses.find((w) => w.warehouseId === warehouseId);
 
-  function handleSearch(value: string) {
-    startSearchTransition(() => setSearch(value));
+  function buildUrl(params: Record<string, string | undefined>) {
+    const p = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
+    return `${pathname}?${p.toString()}`;
   }
 
-  function openCreate() {
-    setEditingLocation(null);
-    setActionError(null);
-    setDialogOpen(true);
-  }
-
-  function openEdit(loc: Location) {
-    setEditingLocation(loc);
-    setActionError(null);
-    setDialogOpen(true);
-  }
-
-  function handleSubmit(data: LocationFormValues) {
-    setActionError(null);
-
-    if (editingLocation) {
-      const updated: Location = { ...editingLocation, ...data };
-      startActionTransition(async () => {
-        dispatchOptimistic({ type: 'update', location: updated });
-        const result = await updateLocation(editingLocation.locationId, data);
-        if ('error' in result) setActionError(result.error);
-      });
-    } else {
-      const temp: Location = {
-        locationId: `opt-${Date.now()}`,
-        status: 'ACTIVE',
-        ...data,
-      };
-      startActionTransition(async () => {
-        dispatchOptimistic({ type: 'add', location: temp });
-        const result = await createLocation(data);
-        if ('error' in result) setActionError(result.error);
-      });
+  function handleRowClick(location: Location) {
+    if (location.type === 'PASILLO') {
+      router.push(buildUrl({ warehouseId, aisleId: location.locationId, aisleCode: location.code }));
+    } else if (location.type === 'RACK') {
+      router.push(buildUrl({ warehouseId, aisleId, aisleCode, rackId: location.locationId, rackCode: location.code }));
     }
   }
+
+  function handleCreate(data: LocationFormValues) {
+    setActionError(null);
+
+    // Sólo mostrar optimistic si la nueva ubicación pertenece al nivel actual
+    const currentParentId = rackId ?? aisleId ?? null;
+    const newParentId = data.parentLocationId ?? null;
+
+    const belongsHere =
+      (level === 'PASILLO' && data.type === 'PASILLO' && newParentId === null) ||
+      (level === 'RACK'    && data.type === 'RACK'    && newParentId === aisleId) ||
+      (level === 'BIN'     && data.type === 'BIN'     && newParentId === rackId);
+
+    const temp: Location = {
+      locationId: `opt-${Date.now()}`,
+      warehouseId,
+      type: data.type,
+      code: '···',
+      parentLocationId: newParentId,
+      status: 'INACTIVE',
+    };
+
+    startActionTransition(async () => {
+      if (belongsHere) dispatchOptimistic(temp);
+      const result = await createLocation(data);
+      if ('error' in result) setActionError(result.error);
+    });
+  }
+
+  // Breadcrumb items
+  const breadcrumbItems = warehouse ? (() => {
+    const warehouseUrl = buildUrl({ warehouseId });
+    const items: { label: string; href?: string }[] = [
+      { label: warehouse.name, href: level !== 'PASILLO' ? warehouseUrl : undefined },
+    ];
+    if (aisleCode) {
+      const aisleUrl = buildUrl({ warehouseId, aisleId, aisleCode });
+      items.push({ label: aisleCode, href: level !== 'RACK' ? aisleUrl : undefined });
+    }
+    if (rackCode) items.push({ label: rackCode });
+    return items;
+  })() : [];
+
+  const levelMeta = {
+    WAREHOUSE: { icon: MapPin, title: '', hint: '', emptyTitle: '', emptyDesc: '' },
+    PASILLO: {
+      icon: Rows3,
+      title: 'Pasillos',
+      hint: 'Haz clic en un pasillo para explorar sus racks.',
+      emptyTitle: 'Sin pasillos',
+      emptyDesc: 'Esta bodega aún no tiene pasillos. Crea el primero para empezar a organizar el espacio.',
+    },
+    RACK: {
+      icon: Archive,
+      title: `Racks — ${aisleCode}`,
+      hint: 'Haz clic en un rack para ver sus bins (posiciones de almacenamiento).',
+      emptyTitle: 'Sin racks',
+      emptyDesc: 'Este pasillo aún no tiene racks. Agrega uno para poder crear bins.',
+    },
+    BIN: {
+      icon: MapPin,
+      title: `Bins — ${rackCode}`,
+      hint: 'Los bins son las posiciones individuales donde se ubica el inventario.',
+      emptyTitle: 'Sin bins',
+      emptyDesc: 'Este rack aún no tiene bins. Agrega el primero para comenzar a almacenar inventario.',
+    },
+  } as const;
 
   return (
     <>
       <div className="mb-6">
-        <WarehouseSelector warehouses={warehouses} value={initialWarehouseId} />
+        <WarehouseSelector warehouses={warehouses} value={warehouseId} />
       </div>
 
-      {!initialWarehouseId ? (
+      {level === 'WAREHOUSE' ? (
         <EmptyState
           icon={MapPin}
           title="Selecciona una bodega"
@@ -108,6 +155,16 @@ function UbicacionesClientInner({
         />
       ) : (
         <>
+          {breadcrumbItems.length > 0 && (
+            <DrilldownBreadcrumb items={breadcrumbItems} />
+          )}
+
+          {levelMeta[level].hint && (
+            <p className="text-sm text-muted-foreground mb-5">
+              {levelMeta[level].hint}
+            </p>
+          )}
+
           {actionError && (
             <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -116,15 +173,14 @@ function UbicacionesClientInner({
           )}
 
           <div className="flex items-center gap-3 mb-5">
-            <SearchInput
-              value={search}
-              onChange={handleSearch}
-              placeholder="Buscar código, tipo, pasillo..."
-              isPending={searchPending}
-              className="w-72"
-            />
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {levelMeta[level].title}
+              <span className="ml-2 font-normal normal-case tracking-normal">
+                ({optimisticLocations.length})
+              </span>
+            </p>
             <Button
-              onClick={openCreate}
+              onClick={() => { setActionError(null); setDialogOpen(true); }}
               className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
               size="lg"
             >
@@ -133,27 +189,25 @@ function UbicacionesClientInner({
             </Button>
           </div>
 
-          {optimisticFiltered.length === 0 ? (
+          {optimisticLocations.length === 0 ? (
             <EmptyState
-              icon={MapPin}
-              title="No se encontraron ubicaciones"
-              description={
-                search
-                  ? `Sin resultados para "${search}". Intenta con otro código o tipo.`
-                  : 'Esta bodega aún no tiene ubicaciones. Crea la primera.'
-              }
-              action={!search ? { label: '+ Agregar la primera', onClick: openCreate } : undefined}
+              icon={levelMeta[level].icon}
+              title={levelMeta[level].emptyTitle}
+              description={levelMeta[level].emptyDesc}
+              action={{ label: '+ Agregar la primera', onClick: () => setDialogOpen(true) }}
             />
           ) : (
-            <UbicacionesTable locations={optimisticFiltered} onEdit={openEdit} />
+            <UbicacionesTable
+              locations={optimisticLocations}
+              onRowClick={level !== 'BIN' ? handleRowClick : undefined}
+            />
           )}
 
           <UbicacionDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
-            location={editingLocation}
-            warehouseId={initialWarehouseId}
-            onSubmit={handleSubmit}
+            warehouseId={warehouseId}
+            onSubmit={handleCreate}
           />
         </>
       )}

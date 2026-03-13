@@ -80,25 +80,38 @@ export const MOCK_WAREHOUSES: Warehouse[] = [
   },
 ];
 
+// Jerarquía: PASILLO → RACK → BIN
+// parentLocationId = null → PASILLO (top-level de bodega)
+// parentLocationId = aisleId → RACK
+// parentLocationId = rackId  → BIN
 export const MOCK_LOCATIONS: Location[] = [
-  // Bodega Principal Bogotá (wh-001)
-  { locationId: 'loc-001', code: 'A-01-001', type: 'RACK',    aisle: 'A', rack: '01', bin: '001', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-002', code: 'A-01-002', type: 'RACK',    aisle: 'A', rack: '01', bin: '002', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-003', code: 'A-02-001', type: 'RACK',    aisle: 'A', rack: '02', bin: '001', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-004', code: 'B-01-001', type: 'BIN',     aisle: 'B', rack: '01', bin: '001', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-005', code: 'B-01-002', type: 'BIN',     aisle: 'B', rack: '01', bin: '002', warehouseId: 'wh-001', status: 'INACTIVE' },
-  { locationId: 'loc-006', code: 'STG-01',   type: 'STAGING', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-007', code: 'PACK-01',  type: 'PACKING', warehouseId: 'wh-001', status: 'ACTIVE' },
-  { locationId: 'loc-008', code: 'DEV-01',   type: 'RETURNS', warehouseId: 'wh-001', status: 'ACTIVE' },
+  // ── wh-001: Bodega Principal Bogotá ──────────────────────────────
+  // Pasillos
+  { locationId: 'loc-p01', warehouseId: 'wh-001', type: 'PASILLO', code: 'P-0001', parentLocationId: null, status: 'ACTIVE' },
+  { locationId: 'loc-p02', warehouseId: 'wh-001', type: 'PASILLO', code: 'P-0002', parentLocationId: null, status: 'ACTIVE' },
+  { locationId: 'loc-p03', warehouseId: 'wh-001', type: 'PASILLO', code: 'P-0003', parentLocationId: null, status: 'INACTIVE' },
+  // Racks de P-0001
+  { locationId: 'loc-r01', warehouseId: 'wh-001', type: 'RACK', code: 'R-0001', parentLocationId: 'loc-p01', status: 'ACTIVE' },
+  { locationId: 'loc-r02', warehouseId: 'wh-001', type: 'RACK', code: 'R-0002', parentLocationId: 'loc-p01', status: 'ACTIVE' },
+  { locationId: 'loc-r03', warehouseId: 'wh-001', type: 'RACK', code: 'R-0003', parentLocationId: 'loc-p01', status: 'INACTIVE' },
+  // Racks de P-0002
+  { locationId: 'loc-r04', warehouseId: 'wh-001', type: 'RACK', code: 'R-0001', parentLocationId: 'loc-p02', status: 'ACTIVE' },
+  // Bins de R-0001 (loc-r01)
+  { locationId: 'loc-b01', warehouseId: 'wh-001', type: 'BIN', code: 'B-0001', parentLocationId: 'loc-r01', status: 'ACTIVE' },
+  { locationId: 'loc-b02', warehouseId: 'wh-001', type: 'BIN', code: 'B-0002', parentLocationId: 'loc-r01', status: 'ACTIVE' },
+  { locationId: 'loc-b03', warehouseId: 'wh-001', type: 'BIN', code: 'B-0003', parentLocationId: 'loc-r01', status: 'INACTIVE' },
+  // Bins de R-0002 (loc-r02)
+  { locationId: 'loc-b04', warehouseId: 'wh-001', type: 'BIN', code: 'B-0001', parentLocationId: 'loc-r02', status: 'ACTIVE' },
+  // Bins de R-0001 (loc-r04, de P-0002)
+  { locationId: 'loc-b05', warehouseId: 'wh-001', type: 'BIN', code: 'B-0001', parentLocationId: 'loc-r04', status: 'ACTIVE' },
 
-  // Centro de Distribución Medellín (wh-002)
-  { locationId: 'loc-009', code: 'A-01-001', type: 'RACK',    aisle: 'A', rack: '01', bin: '001', warehouseId: 'wh-002', status: 'ACTIVE' },
-  { locationId: 'loc-010', code: 'A-01-002', type: 'RACK',    aisle: 'A', rack: '01', bin: '002', warehouseId: 'wh-002', status: 'ACTIVE' },
-  { locationId: 'loc-011', code: 'C-03-001', type: 'RACK',    aisle: 'C', rack: '03', bin: '001', warehouseId: 'wh-002', status: 'ACTIVE' },
-  { locationId: 'loc-012', code: 'STG-01',   type: 'STAGING', warehouseId: 'wh-002', status: 'ACTIVE' },
-  { locationId: 'loc-013', code: 'DEV-01',   type: 'RETURNS', warehouseId: 'wh-002', status: 'ACTIVE' },
-
-  // Bodega Cali Industrial (wh-004)
-  { locationId: 'loc-014', code: 'A-01-001', type: 'RACK',    aisle: 'A', rack: '01', bin: '001', warehouseId: 'wh-004', status: 'ACTIVE' },
-  { locationId: 'loc-015', code: 'PACK-01',  type: 'PACKING', warehouseId: 'wh-004', status: 'ACTIVE' },
+  // ── wh-002: Centro de Distribución Medellín ──────────────────────
+  // Pasillos
+  { locationId: 'loc-p04', warehouseId: 'wh-002', type: 'PASILLO', code: 'P-0001', parentLocationId: null, status: 'ACTIVE' },
+  { locationId: 'loc-p05', warehouseId: 'wh-002', type: 'PASILLO', code: 'P-0002', parentLocationId: null, status: 'INACTIVE' },
+  // Racks de P-0001 (wh-002)
+  { locationId: 'loc-r05', warehouseId: 'wh-002', type: 'RACK', code: 'R-0001', parentLocationId: 'loc-p04', status: 'ACTIVE' },
+  // Bins de R-0001 (loc-r05)
+  { locationId: 'loc-b06', warehouseId: 'wh-002', type: 'BIN', code: 'B-0001', parentLocationId: 'loc-r05', status: 'ACTIVE' },
+  { locationId: 'loc-b07', warehouseId: 'wh-002', type: 'BIN', code: 'B-0002', parentLocationId: 'loc-r05', status: 'ACTIVE' },
 ];

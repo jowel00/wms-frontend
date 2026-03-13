@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Select,
   SelectContent,
@@ -19,12 +19,10 @@ interface WarehouseSelectorProps {
 export function WarehouseSelector({ warehouses, value }: WarehouseSelectorProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   function handleChange(warehouseId: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('warehouseId', warehouseId);
-    params.delete('q');
+    // Reinicia toda la jerarquía al cambiar de bodega
+    const params = new URLSearchParams({ warehouseId });
     router.push(`${pathname}?${params.toString()}`);
   }
 

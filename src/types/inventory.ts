@@ -26,17 +26,16 @@ export interface Warehouse {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
-export type LocationType = 'RACK' | 'BIN' | 'STAGING' | 'PACKING' | 'RETURNS';
+export type LocationType = 'PASILLO' | 'RACK' | 'BIN';
 
 export interface Location {
   locationId: string;
-  code: string;
-  type: LocationType;
-  aisle?: string;
-  rack?: string;
-  bin?: string;
   warehouseId: string;
+  type: LocationType;
+  code: string;
+  parentLocationId: string | null;
   status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
 }
 
 // Para la HU de Carga Masiva

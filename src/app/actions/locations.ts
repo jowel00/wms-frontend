@@ -2,11 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { locationSchema } from '@/src/lib/validations/locations';
-import {
-  postLocation,
-  patchLocation,
-  patchLocationStatus,
-} from '@/src/services/locationService';
+import { postLocation, patchLocation, fetchLocations } from '@/src/services/locationService';
+import type { Location } from '@/src/types/inventory';
 
 type ActionResult = { success: true } | { error: string };
 
@@ -34,15 +31,10 @@ export async function updateLocation(id: string, data: unknown): Promise<ActionR
   }
 }
 
-export async function toggleLocationStatus(
-  id: string,
-  status: 'ACTIVE' | 'INACTIVE'
-): Promise<ActionResult> {
-  try {
-    await patchLocationStatus(id, status);
-    revalidatePath('/ubicaciones');
-    return { success: true };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Error al cambiar estado' };
-  }
+// Usado desde el dialog en el cliente para cargar opciones de la jerarquía
+export async function queryLocations(
+  warehouseId: string,
+  parentLocationId?: string
+): Promise<Location[]> {
+  return fetchLocations(warehouseId, parentLocationId).catch(() => []);
 }

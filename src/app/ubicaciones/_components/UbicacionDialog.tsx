@@ -1,23 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
@@ -25,24 +17,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { locationSchema, type LocationFormValues } from '@/src/lib/validations/locations';
-import type { Location } from '@/src/types/inventory';
+import { Label } from '@/components/ui/label';
+import { queryLocations } from '@/src/app/actions/locations';
+import type { Location, LocationType } from '@/src/types/inventory';
+import type { LocationFormValues } from '@/src/lib/validations/locations';
 
-const LOCATION_TYPES = ['RACK', 'BIN', 'STAGING', 'PACKING', 'RETURNS'] as const;
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_LABELS: Record<LocationType, string> = {
+  PASILLO: 'Pasillo',
   RACK: 'Rack',
   BIN: 'Bin',
-  STAGING: 'Staging',
-  PACKING: 'Packing',
-  RETURNS: 'Devoluciones',
+};
+
+const TYPE_DESCRIPTIONS: Record<LocationType, string> = {
+  PASILLO: 'Vía de acceso principal dentro de la bodega. Agrupa los racks a lo largo de un corredor.',
+  RACK: 'Estantería dentro de un pasillo. Contendrá los bins (posiciones individuales).',
+  BIN: 'Posición individual de almacenamiento dentro de un rack. Aquí se ubica el inventario.',
+};
+
+const SUBMIT_LABELS: Record<LocationType, string> = {
+  PASILLO: 'Crear Pasillo',
+  RACK: 'Crear Rack',
+  BIN: 'Crear Bin',
 };
 
 interface UbicacionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  location?: Location | null;
   warehouseId: string;
   onSubmit: (data: LocationFormValues) => void;
 }
@@ -50,148 +51,202 @@ interface UbicacionDialogProps {
 export function UbicacionDialog({
   open,
   onOpenChange,
-  location,
   warehouseId,
   onSubmit,
 }: UbicacionDialogProps) {
-  const form = useForm<LocationFormValues>({
-    resolver: zodResolver(locationSchema),
-    defaultValues: { code: '', type: 'RACK', aisle: '', rack: '', bin: '', warehouseId },
-  });
+  const [type, setType] = useState<LocationType | ''>('');
+  const [selectedAisleId, setSelectedAisleId] = useState('');
+  const [selectedRackId, setSelectedRackId] = useState('');
 
+  const [pasillos, setPasillos] = useState<Location[]>([]);
+  const [racks, setRacks] = useState<Location[]>([]);
+  const [loadingPasillos, setLoadingPasillos] = useState(false);
+  const [loadingRacks, setLoadingRacks] = useState(false);
+
+  // Resetear estado al abrir
   useEffect(() => {
     if (open) {
-      form.reset({
-        code: location?.code ?? '',
-        type: location?.type ?? 'RACK',
-        aisle: location?.aisle ?? '',
-        rack: location?.rack ?? '',
-        bin: location?.bin ?? '',
-        warehouseId,
-      });
+      setType('');
+      setSelectedAisleId('');
+      setSelectedRackId('');
+      setPasillos([]);
+      setRacks([]);
     }
-  }, [open, location, warehouseId, form]);
+  }, [open]);
 
-  function handleSubmit(data: LocationFormValues) {
-    onSubmit(data);
+  // Cargar pasillos cuando el tipo requiere seleccionar uno
+  useEffect(() => {
+    if (!open || (type !== 'RACK' && type !== 'BIN')) return;
+    setSelectedAisleId('');
+    setSelectedRackId('');
+    setRacks([]);
+    setLoadingPasillos(true);
+    queryLocations(warehouseId, undefined) // undefined = pasillos (top-level)
+      .then(setPasillos)
+      .finally(() => setLoadingPasillos(false));
+  }, [type, open, warehouseId]);
+
+  // Cargar racks cuando se selecciona un pasillo y el tipo es BIN
+  useEffect(() => {
+    if (!open || type !== 'BIN' || !selectedAisleId) return;
+    setSelectedRackId('');
+    setLoadingRacks(true);
+    queryLocations(warehouseId, selectedAisleId)
+      .then(setRacks)
+      .finally(() => setLoadingRacks(false));
+  }, [selectedAisleId, type, open, warehouseId]);
+
+  const isReady =
+    type === 'PASILLO' ||
+    (type === 'RACK' && !!selectedAisleId) ||
+    (type === 'BIN' && !!selectedRackId);
+
+  function handleSubmit() {
+    if (!type || !isReady) return;
+
+    const parentLocationId =
+      type === 'PASILLO' ? null
+      : type === 'RACK' ? selectedAisleId
+      : selectedRackId; // BIN
+
+    onSubmit({ warehouseId, type, parentLocationId });
     onOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
-            {location ? 'Editar Ubicación' : 'Nueva Ubicación'}
+          <DialogTitle className="text-xl font-bold uppercase tracking-tight">
+            Nueva Ubicación
           </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            El código se generará automáticamente. Elige el tipo y completa la jerarquía requerida.
+          </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Código</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ej: A-01-001"
-                      className="h-14 text-base font-mono tracking-wider"
-                      {...field}
+
+        <div className="space-y-5 py-2">
+          {/* Tipo — campo maestro */}
+          <div className="space-y-2">
+            <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Tipo
+            </Label>
+            <Select value={type} onValueChange={(v) => setType(v as LocationType)}>
+              <SelectTrigger className="h-14 text-base">
+                <SelectValue placeholder="Selecciona el tipo de ubicación" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(TYPE_LABELS) as LocationType[]).map((t) => (
+                  <SelectItem key={t} value={t} className="text-base py-3">
+                    {TYPE_LABELS[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Descripción del tipo seleccionado */}
+          {type !== '' && (
+            <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 leading-relaxed">
+              {TYPE_DESCRIPTIONS[type as LocationType]}
+            </p>
+          )}
+
+          {/* Pasillo — requerido para RACK y BIN */}
+          {(type === 'RACK' || type === 'BIN') && (
+            <div className="space-y-2">
+              <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                {type === 'RACK' ? 'Pasillo donde irá el rack' : '1. Elige el pasillo'}
+              </Label>
+              {loadingPasillos ? (
+                <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cargando pasillos...
+                </div>
+              ) : (
+                <Select
+                  value={selectedAisleId}
+                  onValueChange={setSelectedAisleId}
+                  disabled={pasillos.length === 0}
+                >
+                  <SelectTrigger className="h-14 text-base">
+                    <SelectValue
+                      placeholder={
+                        pasillos.length === 0
+                          ? 'No hay pasillos disponibles'
+                          : 'Selecciona un pasillo'
+                      }
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pasillos.map((p) => (
+                      <SelectItem key={p.locationId} value={p.locationId} className="text-base py-3">
+                        <span className="font-mono font-bold">{p.code}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Tipo</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-14 text-base">
-                        <SelectValue placeholder="Selecciona un tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {LOCATION_TYPES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-base py-3">
-                          {TYPE_LABELS[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                Jerarquía Pasillo → Rack → Bin
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <FormField
-                  control={form.control}
-                  name="aisle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base font-semibold">Pasillo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="A" className="h-14 text-base font-mono text-center" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="rack"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base font-semibold">Rack</FormLabel>
-                      <FormControl>
-                        <Input placeholder="01" className="h-14 text-base font-mono text-center" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base font-semibold">Bin</FormLabel>
-                      <FormControl>
-                        <Input placeholder="001" className="h-14 text-base font-mono text-center" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </div>
-            <DialogFooter className="gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="h-12 px-6 text-base"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="h-12 px-8 text-base font-bold uppercase tracking-wider"
-              >
-                {location ? 'Guardar cambios' : 'Crear ubicación'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          )}
+
+          {/* Rack — requerido solo para BIN (aparece tras elegir pasillo) */}
+          {type === 'BIN' && selectedAisleId && (
+            <div className="space-y-2">
+              <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                2. Elige el rack
+              </Label>
+              {loadingRacks ? (
+                <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cargando racks...
+                </div>
+              ) : (
+                <Select
+                  value={selectedRackId}
+                  onValueChange={setSelectedRackId}
+                  disabled={racks.length === 0}
+                >
+                  <SelectTrigger className="h-14 text-base">
+                    <SelectValue
+                      placeholder={
+                        racks.length === 0
+                          ? 'No hay racks en este pasillo'
+                          : 'Selecciona un rack'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {racks.map((r) => (
+                      <SelectItem key={r.locationId} value={r.locationId} className="text-base py-3">
+                        <span className="font-mono font-bold">{r.code}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-12 px-6 text-base"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!isReady}
+            className="h-12 px-8 text-base font-bold uppercase tracking-wider"
+          >
+            {type ? SUBMIT_LABELS[type as LocationType] : 'Crear ubicación'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

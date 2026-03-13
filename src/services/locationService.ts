@@ -9,38 +9,44 @@ function apiUrl() {
   return base;
 }
 
-export async function fetchLocations(warehouseId?: string): Promise<Location[]> {
+// parentLocationId:
+//   undefined → top-level (pasillos, parent IS NULL)
+//   string    → children of that location (racks or bins)
+export async function fetchLocations(
+  warehouseId: string,
+  parentLocationId?: string
+): Promise<Location[]> {
   if (USE_MOCK) {
-    return warehouseId
-      ? MOCK_LOCATIONS.filter((l) => l.warehouseId === warehouseId)
-      : MOCK_LOCATIONS;
+    return MOCK_LOCATIONS.filter((l) => {
+      if (l.warehouseId !== warehouseId) return false;
+      if (parentLocationId === undefined) return l.parentLocationId === null;
+      return l.parentLocationId === parentLocationId;
+    });
   }
-  const url = warehouseId
-    ? `${apiUrl()}/locations?warehouseId=${warehouseId}`
-    : `${apiUrl()}/locations`;
-  const res = await fetch(url, { cache: 'no-store' });
+  const params = new URLSearchParams({ warehouseId });
+  if (parentLocationId !== undefined) params.set('parentLocationId', parentLocationId);
+  const res = await fetch(`${apiUrl()}/locations?${params}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`fetchLocations: HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  // Map active boolean → status string if backend sends { active: boolean }
+  return data.map((l: Location & { active?: boolean }) =>
+    l.active !== undefined ? { ...l, status: l.active ? 'ACTIVE' : 'INACTIVE' } : l
+  );
 }
 
 export async function postLocation(data: {
-  code: string;
-  type: string;
-  aisle?: string;
-  rack?: string;
-  bin?: string;
   warehouseId: string;
+  type: string;
+  parentLocationId?: string | null;
 }): Promise<Location> {
   if (USE_MOCK) {
     return {
       locationId: `mock-${Date.now()}`,
-      code: data.code,
-      type: data.type as Location['type'],
-      aisle: data.aisle,
-      rack: data.rack,
-      bin: data.bin,
       warehouseId: data.warehouseId,
-      status: 'ACTIVE',
+      type: data.type as Location['type'],
+      code: '···',
+      parentLocationId: data.parentLocationId ?? null,
+      status: 'INACTIVE',
     };
   }
   const res = await fetch(`${apiUrl()}/locations`, {
@@ -54,11 +60,18 @@ export async function postLocation(data: {
 
 export async function patchLocation(
   id: string,
-  data: { code: string; type: string; aisle?: string; rack?: string; bin?: string; warehouseId: string }
+  data: { warehouseId: string; type: string; parentLocationId?: string | null; code?: string }
 ): Promise<Location> {
   if (USE_MOCK) {
     const existing = MOCK_LOCATIONS.find((l) => l.locationId === id);
-    return { ...existing!, ...data, type: data.type as Location['type'] };
+    const merged: Location = {
+      ...existing!,
+      ...data,
+      // Preserve existing code if not provided in the patch payload
+      code: data.code ?? existing!.code,
+      type: data.type as Location['type'],
+    };
+    return merged;
   }
   const res = await fetch(`${apiUrl()}/locations/${id}`, {
     method: 'PATCH',
@@ -66,22 +79,5 @@ export async function patchLocation(
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`patchLocation: HTTP ${res.status}`);
-  return res.json();
-}
-
-export async function patchLocationStatus(
-  id: string,
-  status: 'ACTIVE' | 'INACTIVE'
-): Promise<Location> {
-  if (USE_MOCK) {
-    const existing = MOCK_LOCATIONS.find((l) => l.locationId === id);
-    return { ...existing!, status };
-  }
-  const res = await fetch(`${apiUrl()}/locations/${id}/status`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  });
-  if (!res.ok) throw new Error(`patchLocationStatus: HTTP ${res.status}`);
   return res.json();
 }

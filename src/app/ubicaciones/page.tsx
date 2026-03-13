@@ -3,15 +3,29 @@ import { fetchLocations } from '@/src/services/locationService';
 import { UbicacionesClient } from './_components/UbicacionesClient';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; warehouseId?: string }>;
+  searchParams: Promise<{
+    warehouseId?: string;
+    aisleId?: string;
+    aisleCode?: string;
+    rackId?: string;
+    rackCode?: string;
+  }>;
 }
 
 export default async function UbicacionesPage({ searchParams }: PageProps) {
-  const { q, warehouseId } = await searchParams;
+  const { warehouseId, aisleId, aisleCode, rackId, rackCode } = await searchParams;
+
+  // parentLocationId determina el nivel actual:
+  //   undefined → pasillos (top-level)
+  //   aisleId   → racks de ese pasillo
+  //   rackId    → bins de ese rack
+  const parentLocationId = rackId ?? aisleId ?? undefined;
 
   const [warehouses, locations] = await Promise.all([
     fetchWarehouses().catch(() => []),
-    warehouseId ? fetchLocations(warehouseId).catch(() => []) : Promise.resolve([]),
+    warehouseId
+      ? fetchLocations(warehouseId, parentLocationId).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -24,14 +38,17 @@ export default async function UbicacionesPage({ searchParams }: PageProps) {
           Ubicaciones
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Gestiona las ubicaciones dentro de cada bodega — Pasillo → Rack → Bin.
+        Explora y administra tus bodegas por niveles — Pasillo → Rack → Bin.
         </p>
       </header>
       <UbicacionesClient
         warehouses={warehouses}
         locations={locations}
-        initialSearch={q ?? ''}
-        initialWarehouseId={warehouseId ?? ''}
+        warehouseId={warehouseId ?? ''}
+        aisleId={aisleId}
+        aisleCode={aisleCode}
+        rackId={rackId}
+        rackCode={rackCode}
       />
     </div>
   );
