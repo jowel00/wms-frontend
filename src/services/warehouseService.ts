@@ -1,7 +1,4 @@
 import type { Warehouse } from '@/src/types/inventory';
-import { MOCK_WAREHOUSES } from '@/src/lib/mock-data';
-
-const USE_MOCK = process.env.USE_MOCK === 'true';
 
 function apiUrl() {
   const base = process.env.NEXT_PUBLIC_API_URL;
@@ -9,23 +6,20 @@ function apiUrl() {
   return base;
 }
 
-export async function fetchWarehouses(): Promise<Warehouse[]> {
-  if (USE_MOCK) return MOCK_WAREHOUSES;
-  const res = await fetch(`${apiUrl()}/warehouses`, { cache: 'no-store' });
+// El backend requiere ownerId: GET /api/v1/warehouses?ownerId=UUID
+export async function fetchWarehouses(ownerId: string): Promise<Warehouse[]> {
+  const res = await fetch(`${apiUrl()}/warehouses?ownerId=${ownerId}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`fetchWarehouses: HTTP ${res.status}`);
   return res.json();
 }
 
+// Backend acepta: { ownerId, name, countryCode, city }
 export async function postWarehouse(data: {
   name: string;
   city: string;
-  country: string;
   countryCode: string;
   ownerId: string;
 }): Promise<Warehouse> {
-  if (USE_MOCK) {
-    return { warehouseId: `mock-${Date.now()}`, status: 'ACTIVE', ...data };
-  }
   const res = await fetch(`${apiUrl()}/warehouses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -37,12 +31,8 @@ export async function postWarehouse(data: {
 
 export async function patchWarehouse(
   id: string,
-  data: { name: string; city: string; country: string; countryCode: string; ownerId: string }
+  data: { name: string; city: string; countryCode: string; ownerId: string }
 ): Promise<Warehouse> {
-  if (USE_MOCK) {
-    const existing = MOCK_WAREHOUSES.find((w) => w.warehouseId === id);
-    return { ...existing!, ...data };
-  }
   const res = await fetch(`${apiUrl()}/warehouses/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -56,10 +46,6 @@ export async function patchWarehouseStatus(
   id: string,
   status: 'ACTIVE' | 'INACTIVE'
 ): Promise<Warehouse> {
-  if (USE_MOCK) {
-    const existing = MOCK_WAREHOUSES.find((w) => w.warehouseId === id);
-    return { ...existing!, status };
-  }
   const res = await fetch(`${apiUrl()}/warehouses/${id}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
