@@ -8,10 +8,13 @@ interface PageProps {
 
 export default async function BodegasPage({ searchParams }: PageProps) {
   const { q, ownerId } = await searchParams;
-  const [warehouses, owners] = await Promise.all([
-    fetchWarehouses().catch(() => []),
-    fetchOwners().catch(() => []),
-  ]);
+
+  const owners = await fetchOwners().catch(() => []);
+
+  const warehousesByOwner = await Promise.all(
+    owners.map(o => fetchWarehouses(o.ownerId).catch(() => []))
+  );
+  const warehouses = warehousesByOwner.flat();
 
   return (
     <div className="p-6 md:p-8">

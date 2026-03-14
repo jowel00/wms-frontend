@@ -16,7 +16,7 @@ export function useWarehouses(
         !q ||
         w.name.toLowerCase().includes(q) ||
         w.city.toLowerCase().includes(q) ||
-        w.country.toLowerCase().includes(q);
+        w.countryCode.toLowerCase().includes(q);
       const matchesOwner = !ownerFilter || w.ownerId === ownerFilter;
       return matchesSearch && matchesOwner;
     });
