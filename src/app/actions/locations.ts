@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { locationSchema } from '@/src/lib/validations/locations';
-import { postLocation, patchLocation, fetchLocations } from '@/src/services/locationService';
+import { postLocation, deactivateLocation, fetchLocations } from '@/src/services/locationService';
 import type { Location } from '@/src/types/inventory';
 
 type ActionResult = { success: true } | { error: string };
@@ -19,15 +19,14 @@ export async function createLocation(data: unknown): Promise<ActionResult> {
   }
 }
 
-export async function updateLocation(id: string, data: unknown): Promise<ActionResult> {
-  const parsed = locationSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+// El backend solo expone PATCH /locations/{id}/deactivate — no hay endpoint de edición genérico
+export async function updateLocation(id: string, _data: unknown): Promise<ActionResult> {
   try {
-    await patchLocation(id, parsed.data);
+    await deactivateLocation(id);
     revalidatePath('/ubicaciones');
     return { success: true };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Error al actualizar ubicación' };
+    return { error: e instanceof Error ? e.message : 'Error al desactivar ubicación' };
   }
 }
 
