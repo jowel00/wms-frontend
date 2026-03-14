@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { queryLocations } from '@/src/app/actions/locations';
 import type { Location, LocationType } from '@/src/types/inventory';
 import type { LocationFormValues } from '@/src/lib/validations/locations';
@@ -55,6 +56,7 @@ export function UbicacionDialog({
   onSubmit,
 }: UbicacionDialogProps) {
   const [type, setType] = useState<LocationType | ''>('');
+  const [code, setCode] = useState('');
   const [selectedAisleId, setSelectedAisleId] = useState('');
   const [selectedRackId, setSelectedRackId] = useState('');
 
@@ -67,6 +69,7 @@ export function UbicacionDialog({
   useEffect(() => {
     if (open) {
       setType('');
+      setCode('');
       setSelectedAisleId('');
       setSelectedRackId('');
       setPasillos([]);
@@ -97,9 +100,11 @@ export function UbicacionDialog({
   }, [selectedAisleId, type, open, warehouseId]);
 
   const isReady =
-    type === 'PASILLO' ||
-    (type === 'RACK' && !!selectedAisleId) ||
-    (type === 'BIN' && !!selectedRackId);
+    !!code.trim() && (
+      type === 'PASILLO' ||
+      (type === 'RACK' && !!selectedAisleId) ||
+      (type === 'BIN' && !!selectedRackId)
+    );
 
   function handleSubmit() {
     if (!type || !isReady) return;
@@ -109,7 +114,7 @@ export function UbicacionDialog({
       : type === 'RACK' ? selectedAisleId
       : selectedRackId; // BIN
 
-    onSubmit({ warehouseId, type, parentLocationId });
+    onSubmit({ warehouseId, type, code: code.trim(), parentLocationId });
     onOpenChange(false);
   }
 
@@ -143,6 +148,19 @@ export function UbicacionDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Código de la ubicación */}
+          <div className="space-y-2">
+            <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Código
+            </Label>
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Ej: A1, R2, B-03"
+              className="h-14 text-base font-mono"
+            />
           </div>
 
           {/* Descripción del tipo seleccionado */}

@@ -30,7 +30,7 @@ export function UbicacionesTable({ locations, onRowClick }: UbicacionesTableProp
     {
       key: 'status',
       header: 'Estado',
-      cell: (l) => <StatusBadge status={l.status} />,
+      cell: (l) => <StatusBadge status={l.active ? 'ACTIVE' : 'INACTIVE'} />,
     },
     {
       key: 'nav',

@@ -54,7 +54,15 @@ function UbicacionesClientInner({
 
   const [optimisticLocations, dispatchOptimistic] = useOptimistic(
     locations,
-    (state: Location[], newLoc: Location) => [...state, newLoc]
+    (state: Location[], newLoc: Location) => {
+      // Activar el padre optimistamente si aplica (RACK activa PASILLO, BIN activa RACK)
+      const withParentActivated = newLoc.parentLocationId
+        ? state.map((l) =>
+            l.locationId === newLoc.parentLocationId ? { ...l, active: true } : l
+          )
+        : state;
+      return [...withParentActivated, newLoc];
+    }
   );
 
   const level = getLevel(warehouseId, aisleId, rackId);
@@ -90,9 +98,9 @@ function UbicacionesClientInner({
       locationId: `opt-${Date.now()}`,
       warehouseId,
       type: data.type,
-      code: '···',
+      code: data.code,
       parentLocationId: newParentId,
-      status: 'INACTIVE',
+      active: true,
     };
 
     startActionTransition(async () => {
