@@ -44,6 +44,15 @@ export interface Warehouse {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
+// ─── LocationType ─────────────────────────────────────────────────────────────
+// Refleja LocationTypeResponse: GET /api/v1/location-types
+export interface LocationTypeItem {
+  typeId: string;
+  name: string;
+  indicator: string;
+  isActive: boolean;
+}
+
 // ─── Location ─────────────────────────────────────────────────────────────────
 export type LocationType = 'PASILLO' | 'RACK' | 'BIN';
 

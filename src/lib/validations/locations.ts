@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const locationSchema = z.object({
   warehouseId: z.string().uuid('Selecciona una bodega válida'),
-  type: z.enum(['PASILLO', 'RACK', 'BIN']),
-  code: z.string().min(1, 'El código es requerido'),
+  typeId: z.string().uuid('Selecciona un tipo de ubicación válido'),
+  typeName: z.string(),
   parentLocationId: z.string().uuid().nullable().optional(),
 });
 

@@ -1,4 +1,4 @@
-import type { Location } from '@/src/types/inventory';
+import type { Location, LocationTypeItem } from '@/src/types/inventory';
 
 function apiUrl() {
   const base = process.env.NEXT_PUBLIC_API_URL;
@@ -19,17 +19,27 @@ export async function fetchLocations(
   return data.filter((l) => l.parentLocationId === parentLocationId);
 }
 
-// Backend requiere { warehouseId, type, code, parentLocationId? } — code es @NotBlank
+// GET /api/v1/location-types — lista todos los tipos de ubicación disponibles
+export async function fetchLocationTypes(): Promise<LocationTypeItem[]> {
+  const res = await fetch(`${apiUrl()}/location-types`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`fetchLocationTypes: HTTP ${res.status}`);
+  return res.json();
+}
+
+// Backend requiere { warehouseId, typeId, parentLocationId? } — el código se genera automáticamente
 export async function postLocation(data: {
   warehouseId: string;
-  type: string;
-  code: string;
+  typeId: string;
   parentLocationId?: string | null;
 }): Promise<Location> {
   const res = await fetch(`${apiUrl()}/locations`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      warehouseId: data.warehouseId,
+      typeId: data.typeId,
+      parentLocationId: data.parentLocationId ?? null,
+    }),
   });
   if (!res.ok) throw new Error(`postLocation: HTTP ${res.status}`);
   return res.json();

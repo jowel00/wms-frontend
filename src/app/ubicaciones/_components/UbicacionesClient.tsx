@@ -90,15 +90,15 @@ function UbicacionesClientInner({
     const newParentId = data.parentLocationId ?? null;
 
     const belongsHere =
-      (level === 'PASILLO' && data.type === 'PASILLO' && newParentId === null) ||
-      (level === 'RACK'    && data.type === 'RACK'    && newParentId === aisleId) ||
-      (level === 'BIN'     && data.type === 'BIN'     && newParentId === rackId);
+      (level === 'PASILLO' && data.typeName === 'PASILLO' && newParentId === null) ||
+      (level === 'RACK'    && data.typeName === 'RACK'    && newParentId === aisleId) ||
+      (level === 'BIN'     && data.typeName === 'BIN'     && newParentId === rackId);
 
     const temp: Location = {
       locationId: `opt-${Date.now()}`,
       warehouseId,
-      type: data.type,
-      code: data.code,
+      type: data.typeName as Location['type'],
+      code: '…', // el backend genera el código; placeholder hasta revalidar
       parentLocationId: newParentId,
       active: true,
     };
