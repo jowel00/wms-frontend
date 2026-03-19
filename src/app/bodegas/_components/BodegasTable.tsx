@@ -26,11 +26,6 @@ export function BodegasTable({ warehouses, onEdit }: BodegasTableProps) {
       cell: (w) => w.city,
     },
     {
-      key: 'country',
-      header: 'País',
-      cell: (w) => w.country,
-    },
-    {
       key: 'countryCode',
       header: 'ISO',
       cell: (w) => (

@@ -35,6 +35,7 @@ export interface Owner {
 
 // ─── Warehouse ────────────────────────────────────────────────────────────────
 // Refleja WarehouseResponse — status: ACTIVE por defecto al crear
+// Nota: el backend NO devuelve `country`, solo `countryCode`
 export interface Warehouse {
   warehouseId: string;
   ownerId: string;

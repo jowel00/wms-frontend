@@ -13,7 +13,7 @@ export async function fetchWarehouses(ownerId: string): Promise<Warehouse[]> {
   return res.json();
 }
 
-// Backend acepta: { ownerId, name, countryCode, city }
+// Backend acepta: { ownerId, name, countryCode, city } — NO incluye country
 export async function postWarehouse(data: {
   name: string;
   city: string;

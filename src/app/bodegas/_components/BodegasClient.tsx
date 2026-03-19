@@ -150,6 +150,7 @@ function BodegasClientInner({
         onOpenChange={setDialogOpen}
         warehouse={editingWarehouse}
         owners={owners}
+        warehouses={optimisticWarehouses}
         onSubmit={handleSubmit}
       />
     </>
