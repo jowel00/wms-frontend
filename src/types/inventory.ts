@@ -30,7 +30,7 @@ export interface Owner {
   ownerId: string;
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;           // Instant → ISO-8601 string
+  createdAt?: string;          // Instant → ISO-8601 string (el backend no siempre lo devuelve)
 }
 
 // ─── Warehouse ────────────────────────────────────────────────────────────────

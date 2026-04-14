@@ -28,8 +28,7 @@ interface OwnersClientProps {
 }
 
 function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
-  const [searchPending, startSearchTransition] = useTransition();
-  const [actionPending, startActionTransition] = useTransition();
+  const [, startActionTransition] = useTransition();
 
   const [optimisticOwners, dispatchOptimistic] = useOptimistic(
     owners,
@@ -39,15 +38,10 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
     }
   );
 
-  // Hook recibe la lista optimista — un único useState interno maneja el search
   const { search, setSearch, filtered: optimisticFiltered } = useOwners(optimisticOwners, initialSearch);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  function handleSearch(value: string) {
-    startSearchTransition(() => setSearch(value));
-  }
 
   function openCreate() {
     setEditingOwner(null);
@@ -96,10 +90,9 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
 
       <div className="flex items-center gap-3 mb-5">
         <SearchInput
-          value={search}
-          onChange={handleSearch}
           placeholder="Buscar owner..."
-          isPending={searchPending}
+          initialValue={initialSearch}
+          onSearch={setSearch}
           className="w-72"
         />
         <Button

@@ -2,7 +2,6 @@
 
 import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { OwnerStatusToggle } from './OwnerStatusToggle';
@@ -19,18 +18,6 @@ export function OwnersTable({ owners, onEdit }: OwnersTableProps) {
       key: 'name',
       header: 'Nombre',
       cell: (o) => <span className="font-semibold text-base">{o.name}</span>,
-    },
-    {
-      key: 'skuCount',
-      header: 'SKUs',
-      cell: (o) =>
-        o.skuCount !== undefined ? (
-          <Badge variant="secondary" className="text-sm px-3 py-1">
-            {o.skuCount}
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
     },
     {
       key: 'status',

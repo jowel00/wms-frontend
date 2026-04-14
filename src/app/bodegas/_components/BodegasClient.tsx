@@ -35,7 +35,6 @@ function BodegasClientInner({
   initialSearch,
   initialOwnerFilter,
 }: BodegasClientProps) {
-  const [searchPending, startSearchTransition] = useTransition();
   const [, startActionTransition] = useTransition();
 
   const [optimisticWarehouses, dispatchOptimistic] = useOptimistic(
@@ -48,7 +47,6 @@ function BodegasClientInner({
     }
   );
 
-  // Hook recibe la lista optimista — un único useState interno maneja search y ownerFilter
   const { search, setSearch, ownerFilter, setOwnerFilter, filtered: optimisticFiltered } = useWarehouses(
     optimisticWarehouses,
     initialSearch,
@@ -57,10 +55,6 @@ function BodegasClientInner({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  function handleSearch(value: string) {
-    startSearchTransition(() => setSearch(value));
-  }
 
   function openCreate() {
     setEditingWarehouse(null);
@@ -109,10 +103,9 @@ function BodegasClientInner({
 
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         <SearchInput
-          value={search}
-          onChange={handleSearch}
           placeholder="Buscar bodega..."
-          isPending={searchPending}
+          initialValue={initialSearch}
+          onSearch={setSearch}
           className="w-72"
         />
         <OwnerFilterSelect owners={owners} value={ownerFilter} onChange={setOwnerFilter} />
