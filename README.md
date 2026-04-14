@@ -1,5 +1,4 @@
 # WMS Frontend — Smart Inventory Suite
-
 > Interfaz de operación logística para **DeRocha Store**.
 > Cliente web en **Next.js + TypeScript** para operarios de bodega, optimizado para uso con guantes, pantallas táctiles y escritorio.
 
@@ -34,32 +33,13 @@ cd wms-frontend
 npm install
 ```
 
-### Variables de entorno
-
-Crea `.env.local` en la raíz del proyecto:
+### Configuración de Entorno
 
 ```bash
-# URL base del backend — obligatorio
-NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+cp .env.example .env.local
+# Edita .env.local y ajusta la URL del backend:
+# NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 ```
-
----
-
-## Docker Setup
-
-> Asegúrate de que `wms-core` esté corriendo antes de iniciar el frontend.
-
-```bash
-# Levanta el backend (desde el repositorio wms-core)
-docker compose up -d
-
-# Verifica que el servicio responda
-curl http://localhost:8080/api/v1/health
-```
-
-El frontend lee la variable `NEXT_PUBLIC_API_URL` para apuntar al backend. Para producción, configúrala en tu pipeline de CI/CD o en tu plataforma de despliegue (Vercel, Railway, etc.).
-
----
 
 ### Desarrollo
 
@@ -73,6 +53,20 @@ npm run dev   # http://localhost:3000
 npm run build
 npm start
 ```
+
+---
+
+Docker Setup
+
+Asegúrate de que wms-core esté corriendo antes de iniciar el frontend.
+
+# Levanta el backend (desde el repositorio wms-core)
+docker compose up -d
+
+# Verifica que el servicio responda
+curl http://localhost:8080/api/v1/health
+
+El frontend lee la variable NEXT_PUBLIC_API_URL para apuntar al backend. Para producción, configúrala en tu pipeline de CI/CD o en tu plataforma de despliegue (Vercel, Railway, etc.).
 
 ---
 
@@ -391,6 +385,13 @@ El ítem activo del sidebar muestra una barra vertical de `3px` a la izquierda (
 | Productos — Catálogo | ✅ Implementado | Listado paginado, creación individual, gate de owner |
 | Productos — Carga masiva CSV | ✅ Implementado | Drag-and-drop, errores de validación por fila |
 | Login / Autenticación | 🔲 Pendiente | El ownerId se integrará con la sesión del usuario al implementar auth |
+Pantalla | Estado | Notas |
+|---|---|---|
+| Dashboard | ✅ Implementado | KPIs placeholder, accesos rápidos |
+| Carga Masiva CSV | ✅ Implementado | Conectado a `/products/bulk-upload` |
+| Owners | ✅ Implementado | CRUD completo + optimistic updates |
+| Bodegas | ✅ Implementado | CRUD completo + filtro por owner |
+| Ubicaciones | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
 | Recepciones | 🔲 Pendiente | — |
 | Movimientos de Stock | 🔲 Pendiente | — |
 | Reportes | 🔲 Pendiente | — |
