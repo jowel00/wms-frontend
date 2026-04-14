@@ -142,3 +142,6 @@ vite.config.ts.timestamp-*
 .agents/
 .claude/skills/
 .claude/settings.local.json
+
+.interface-design/
+skills-lock.json
