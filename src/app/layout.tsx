@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { MainLayout } from '@/components/layout/MainLayout';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="bg-gray-100 text-gray-900 font-mono antialiased">
-        {children}
+      <body className="antialiased">
+        <MainLayout>{children}</MainLayout>
       </body>
     </html>
   );
