@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Toast } from './_components/Toast';
 import { DropZone } from './_components/DropZone';
 import { UploadResult } from './_components/UploadResult';
-import { bulkUpload, BulkUploadError } from '@/src/services/productService';
+import { bulkUpload, BulkUploadError, type BulkUploadErrorPayload } from '@/src/services/productService';
 import type { BulkUploadResponse } from '@/src/types/inventory';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -18,7 +18,7 @@ export function BulkUploadForm() {
   const [dropZoneKey, setDropZoneKey] = useState(0);
   const [status, setStatus] = useState<Status>('idle');
   const [successData, setSuccessData] = useState<BulkUploadResponse | null>(null);
-  const [errorPayload, setErrorPayload] = useState<unknown>(null);
+  const [errorPayload, setErrorPayload] = useState<BulkUploadErrorPayload | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   function handleFileSelect(selected: File) {
@@ -50,7 +50,7 @@ export function BulkUploadForm() {
       if (err instanceof BulkUploadError) {
         setErrorPayload(err.payload);
       } else {
-        setErrorPayload({ message: 'Error de red o del servidor. Intenta nuevamente.' });
+        setErrorPayload({ message: err instanceof Error ? err.message : 'Error de red o del servidor. Intenta nuevamente.' });
       }
       setStatus('error');
     }
@@ -83,7 +83,7 @@ export function BulkUploadForm() {
       </form>
 
       {status === 'success' && successData && (
-        <UploadResult type="success" count={successData.count} message={successData.message} />
+        <UploadResult type="success" count={successData.productsCreated} message={successData.message} />
       )}
       {status === 'error' && (
         <UploadResult type="error" payload={errorPayload} />
