@@ -7,6 +7,7 @@ import {
   Users,
   Warehouse,
   MapPin,
+  Package,
   Upload,
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ const NAV_MAIN = [
   { label: 'Owners', href: '/owners', icon: Users },
   { label: 'Bodegas', href: '/bodegas', icon: Warehouse },
   { label: 'Ubicaciones', href: '/ubicaciones', icon: MapPin },
+  { label: 'Productos', href: '/products', icon: Package },
 ] as const;
 
 const NAV_OPERATIONS = [
