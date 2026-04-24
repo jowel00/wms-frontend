@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Moon,
   Sun,
+  Archive,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -23,6 +25,8 @@ const NAV_MAIN = [
   { label: 'Owners', href: '/owners', icon: Users },
   { label: 'Bodegas', href: '/bodegas', icon: Warehouse },
   { label: 'Ubicaciones', href: '/ubicaciones', icon: MapPin },
+  { label: 'Contenedores', href: '/contenedores', icon: Archive },
+  { label: 'Lotes', href: '/lotes', icon: Layers },
   { label: 'Productos', href: '/products', icon: Package },
 ] as const;
 

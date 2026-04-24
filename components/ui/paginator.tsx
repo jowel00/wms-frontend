@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,14 +33,11 @@ export function Paginator({ currentPage, totalPages, variant = 'full', className
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const navigateTo = useCallback(
-    (page: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('page', String(page));
-      router.push(`${pathname}?${params.toString()}`);
-    },
-    [router, pathname, searchParams],
-  );
+  function navigateTo(page: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(page));
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   if (totalPages <= 1) return null;
 
