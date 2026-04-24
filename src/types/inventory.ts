@@ -67,6 +67,46 @@ export interface Location {
   active: boolean;             // boolean directo del backend
 }
 
+// ─── InventoryContainer ───────────────────────────────────────────────────────
+// ContainerStatus refleja el enum ContainerStatus del backend
+export type ContainerStatus = 'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE';
+// El mapper guarda el tipo en lowercase; los valores válidos son box, tote, pallet
+export type ContainerType = 'box' | 'tote' | 'pallet';
+
+// Refleja InventoryContainerResponse — el backend NO incluye createdAt ni closedAt
+export interface InventoryContainer {
+  containerId: string;        // UUID
+  ownerId: string;            // UUID
+  warehouseId: string;        // UUID
+  locationId: string;         // UUID
+  type: string;               // lowercase: "box" | "tote" | "pallet"
+  status: ContainerStatus;
+}
+
+// ─── ContainerLine ────────────────────────────────────────────────────────────
+// Refleja ContainerLineResponse
+export interface ContainerLine {
+  containerLineId: string;
+  containerId: string;
+  productId: string;
+  lotId: string | null;
+  qtyTotal: number;
+  qtyAvailable: number;
+  qtyReserved: number;
+}
+
+// ─── Lot ──────────────────────────────────────────────────────────────────────
+// Refleja LotResponse — LocalDate serializa como "YYYY-MM-DD"
+export interface Lot {
+  lotId: string;
+  productId: string;
+  ownerId: string;
+  supplierId: string | null;
+  batchCode: string | null;
+  expiresAt: string | null;
+  receivedAt: string | null;
+}
+
 // ─── Carga Masiva ─────────────────────────────────────────────────────────────
 // Refleja la respuesta de POST /api/v1/products/bulk-upload
 export interface BulkUploadResponse {

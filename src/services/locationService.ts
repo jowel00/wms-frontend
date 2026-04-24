@@ -19,6 +19,13 @@ export async function fetchLocations(
   return data.filter((l) => l.parentLocationId === parentLocationId);
 }
 
+// Devuelve TODAS las locations de la bodega sin filtrar por nivel
+export async function fetchAllLocations(warehouseId: string): Promise<Location[]> {
+  const res = await fetch(`${apiUrl()}/locations?warehouseId=${warehouseId}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`fetchAllLocations: HTTP ${res.status}`);
+  return res.json();
+}
+
 // GET /api/v1/location-types — lista todos los tipos de ubicación disponibles
 export async function fetchLocationTypes(): Promise<LocationTypeItem[]> {
   const res = await fetch(`${apiUrl()}/location-types`, { cache: 'no-store' });
