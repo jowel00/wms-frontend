@@ -12,7 +12,7 @@
 | UI | React 19 + Tailwind CSS v4 |
 | Componentes | shadcn/ui v3.8.5 (base Slate) |
 | Lenguaje | TypeScript 5 (strict mode) |
-| Formularios | react-hook-form + zod |
+| Validación | Zod |
 | Optimización | React Compiler (`babel-plugin-react-compiler`) |
 | Backend | wms-core — Java 21 / Spring Boot 3.5.0 |
 
@@ -56,20 +56,6 @@ npm start
 
 ---
 
-Docker Setup
-
-Asegúrate de que wms-core esté corriendo antes de iniciar el frontend.
-
-# Levanta el backend (desde el repositorio wms-core)
-docker compose up -d
-
-# Verifica que el servicio responda
-curl http://localhost:8080/api/v1/health
-
-El frontend lee la variable NEXT_PUBLIC_API_URL para apuntar al backend. Para producción, configúrala en tu pipeline de CI/CD o en tu plataforma de despliegue (Vercel, Railway, etc.).
-
----
-
 ## Estructura del Proyecto
 
 ```
@@ -82,109 +68,130 @@ wms-frontend/
 │   │   ├── globals.css                    # Tokens de diseño (colores, radios)
 │   │   │
 │   │   ├── owners/                        # Gestión de Owners
-│   │   │   ├── page.tsx                   # Server Component — fetch de datos
-│   │   │   ├── loading.tsx                # Skeleton de carga (Suspense)
+│   │   │   ├── page.tsx
+│   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── OwnersClient.tsx       # Boundary cliente — estado, optimistic
-│   │   │       ├── OwnersTable.tsx        # Tabla con DataTable genérico
-│   │   │       ├── OwnerDialog.tsx        # Formulario crear/editar (lazy loaded)
-│   │   │       └── OwnerStatusToggle.tsx  # Switch optimista con rollback
+│   │   │       ├── OwnersClient.tsx
+│   │   │       ├── OwnersTable.tsx
+│   │   │       ├── OwnerDialog.tsx
+│   │   │       └── OwnerStatusToggle.tsx
 │   │   │
 │   │   ├── bodegas/                       # Gestión de Bodegas (Warehouses)
-│   │   │   ├── page.tsx                   # Server Component — fetch paralelo
-│   │   │   ├── loading.tsx                # Skeleton de carga
+│   │   │   ├── page.tsx
+│   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── BodegasClient.tsx      # Boundary cliente — filtros, optimistic
-│   │   │       ├── BodegasTable.tsx       # Tabla con DataTable genérico
-│   │   │       ├── BodegaDialog.tsx       # Formulario crear/editar (lazy loaded)
-│   │   │       ├── BodegaStatusToggle.tsx # Switch optimista con rollback
-│   │   │       └── OwnerFilterSelect.tsx  # Select que filtra por owner y escribe URL
+│   │   │       ├── BodegasClient.tsx
+│   │   │       ├── BodegasTable.tsx
+│   │   │       ├── BodegaDialog.tsx
+│   │   │       ├── BodegaStatusToggle.tsx
+│   │   │       └── OwnerFilterSelect.tsx
 │   │   │
 │   │   ├── ubicaciones/                   # Gestión de Ubicaciones
-│   │   │   ├── page.tsx                   # Server Component — fetch por warehouseId
-│   │   │   ├── loading.tsx                # Skeleton de carga
+│   │   │   ├── page.tsx
+│   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── UbicacionesClient.tsx      # Boundary cliente — gated UI, optimistic
-│   │   │       ├── UbicacionesTable.tsx       # Tabla con DataTable genérico
-│   │   │       ├── UbicacionDialog.tsx        # Formulario crear/editar (lazy loaded)
-│   │   │       ├── LocationStatusToggle.tsx   # Switch optimista con rollback
-│   │   │       ├── LocationTypeBadge.tsx      # Badge por tipo de ubicación
-│   │   │       └── WarehouseSelector.tsx      # Selector obligatorio de bodega (escribe URL)
+│   │   │       ├── UbicacionesClient.tsx
+│   │   │       ├── UbicacionesTable.tsx
+│   │   │       ├── UbicacionDialog.tsx
+│   │   │       ├── LocationTypeBadge.tsx
+│   │   │       └── WarehouseSelector.tsx
+│   │   │
+│   │   ├── contenedores/                  # Gestión de Contenedores de Inventario
+│   │   │   ├── page.tsx                   # Filtros: owner → bodega → bin (URL params)
+│   │   │   ├── loading.tsx
+│   │   │   ├── _components/
+│   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + optimistic
+│   │   │   │   ├── ContainersTable.tsx    # Columna ubicación condicional + link al detalle
+│   │   │   │   ├── ContainerDialog.tsx    # Carga árbol de locations en 1 sola llamada
+│   │   │   │   ├── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
+│   │   │   │   └── (ContainerStatusToggle futuro)
+│   │   │   │
+│   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas
+│   │   │       ├── page.tsx               # Fetch: container + lines + products + lots
+│   │   │       ├── loading.tsx
+│   │   │       └── _components/
+│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor + optimistic lines
+│   │   │           ├── ContainerLinesTable.tsx    # Tabla: producto, lote, qty
+│   │   │           └── AddLineDialog.tsx          # Producto → Lote (filtrado) → Cantidad
+│   │   │
+│   │   ├── lotes/                         # Gestión de Lotes (Lots)
+│   │   │   ├── page.tsx                   # Carga todos los lotes, filtra por owner en servidor
+│   │   │   ├── loading.tsx
+│   │   │   └── _components/
+│   │   │       ├── LotsClient.tsx         # Filtro por owner + optimistic
+│   │   │       ├── LotsTable.tsx          # Tabla con lookup de producto + badge de vencimiento
+│   │   │       ├── LotDialog.tsx          # Owner → Producto → Batch Code → Fechas
+│   │   │       └── LotExpirationBadge.tsx # Rojo=vencido, ámbar≤30d, gris=ok
 │   │   │
 │   │   ├── products/                      # Gestión de Productos
-│   │   │   ├── page.tsx                   # Server Component — fetch paginado por owner
-│   │   │   ├── loading.tsx                # Skeleton de carga
+│   │   │   ├── page.tsx
+│   │   │   ├── loading.tsx
 │   │   │   ├── _components/
-│   │   │   │   ├── ProductsClient.tsx     # Boundary cliente — gate de owner, tabla, optimistic
-│   │   │   │   ├── ProductDialog.tsx      # Formulario crear producto (lazy loaded)
-│   │   │   │   └── ProductOwnerFilter.tsx # Select de owner que escribe URL
-│   │   │   │
-│   │   │   └── bulk-upload/               # Carga Masiva de Catálogo CSV
+│   │   │   │   ├── ProductsClient.tsx
+│   │   │   │   ├── ProductDialog.tsx
+│   │   │   │   └── ProductOwnerFilter.tsx
+│   │   │   └── bulk-upload/
 │   │   │       ├── page.tsx
-│   │   │       ├── BulkUploadForm.tsx     # Formulario con drag-and-drop y manejo de errores
+│   │   │       ├── BulkUploadForm.tsx
 │   │   │       └── _components/
-│   │   │           ├── DropZone.tsx       # Zona de arrastre de archivo
-│   │   │           ├── Toast.tsx          # Notificación flotante
-│   │   │           └── UploadResult.tsx   # Panel de éxito / errores de validación con tabla
+│   │   │           ├── DropZone.tsx
+│   │   │           ├── Toast.tsx
+│   │   │           └── UploadResult.tsx
 │   │   │
 │   │   └── actions/                       # Server Actions
-│   │       ├── owners.ts                  # createOwner, updateOwner, toggleOwnerStatus
-│   │       ├── warehouses.ts              # createWarehouse, updateWarehouse, toggleWarehouseStatus
-│   │       ├── locations.ts               # createLocation, updateLocation, toggleLocationStatus
-│   │       └── products.ts                # createProductAction
+│   │       ├── owners.ts
+│   │       ├── warehouses.ts
+│   │       ├── locations.ts
+│   │       ├── products.ts
+│   │       ├── containers.ts              # createContainer + queryAllContainersLocations
+│   │       ├── lots.ts                    # createLot + queryLotProducts
+│   │       └── containerLines.ts         # createContainerLine + queryLineProducts + queryLineLots
 │   │
 │   ├── services/                          # Clientes HTTP hacia wms-core
-│   │   ├── ownerService.ts                # fetchOwners, postOwner, patchOwner, patchOwnerStatus
-│   │   ├── warehouseService.ts            # fetchWarehouses, postWarehouse, patchWarehouse...
-│   │   ├── locationService.ts             # fetchLocations, postLocation, patchLocation...
-│   │   └── productService.ts              # fetchProducts, createProduct, bulkUpload
+│   │   ├── ownerService.ts
+│   │   ├── warehouseService.ts
+│   │   ├── locationService.ts             # fetchLocations + fetchAllLocations
+│   │   ├── productService.ts
+│   │   ├── containerService.ts            # fetchContainers + fetchContainerById + postContainer
+│   │   ├── containerLineService.ts        # fetchContainerLines + postContainerLine
+│   │   └── lotService.ts                 # fetchLots + postLot
 │   │
 │   ├── types/
-│   │   └── inventory.ts                   # Interfaces del dominio: Product, Owner, Warehouse, Location...
+│   │   └── inventory.ts                   # Product, Owner, Warehouse, Location, LocationType,
+│   │                                      # InventoryContainer, ContainerLine, Lot, BulkUploadResponse
 │   │
 │   └── lib/
-│       ├── colombia-cities.ts             # Lista de ciudades de Colombia (selector en bodegas)
+│       ├── colombia-cities.ts
 │       └── validations/
-│           ├── owners.ts                  # Zod schema — ownerSchema
-│           ├── warehouses.ts              # Zod schema — warehouseSchema
-│           ├── locations.ts               # Zod schema — locationSchema
-│           └── products.ts                # Zod schema — productSchema
+│           ├── owners.ts
+│           ├── warehouses.ts
+│           ├── locations.ts
+│           ├── products.ts
+│           ├── containers.ts              # containerSchema
+│           ├── lots.ts                   # lotSchema — validación cross-field expiresAt > receivedAt
+│           └── containerLines.ts         # containerLineSchema — qtyTotal min 1
 │
 ├── components/
 │   ├── layout/
-│   │   ├── MainLayout.tsx                 # Client component — gestiona colapso del sidebar
-│   │   └── Sidebar.tsx                    # Navegación principal con zone-rail signature
+│   │   ├── MainLayout.tsx
+│   │   └── Sidebar.tsx                    # Nav: Dashboard, Owners, Bodegas, Ubicaciones,
+│   │                                      #      Contenedores, Lotes, Productos, Carga Masiva
 │   │
-│   └── ui/                                # Componentes de interfaz reutilizables
-│       ├── shadcn (instalados vía CLI)
-│       │   ├── button.tsx
-│       │   ├── badge.tsx
-│       │   ├── command.tsx
-│       │   ├── dialog.tsx
-│       │   ├── form.tsx
-│       │   ├── input.tsx
-│       │   ├── label.tsx
-│       │   ├── popover.tsx
-│       │   ├── select.tsx
-│       │   ├── separator.tsx
-│       │   ├── skeleton.tsx
-│       │   ├── switch.tsx
-│       │   ├── table.tsx
-│       │   └── tooltip.tsx
-│       │
+│   └── ui/
+│       ├── (shadcn instalados vía CLI)
 │       └── propios
-│           ├── data-table.tsx             # DataTable<T> genérico — fat-finger, filas py-5
-│           ├── table-skeleton.tsx         # Skeleton de tabla para loading states
-│           ├── search-input.tsx           # Input de búsqueda h-14 con spinner de transición
-│           ├── status-badge.tsx           # Badge ACTIVO (verde) / INACTIVO (gris)
-│           ├── empty-state.tsx            # Vista vacía — ícono + CTA fat-finger
-│           └── paginator.tsx              # Paginador con variante compact y full
+│           ├── data-table.tsx
+│           ├── table-skeleton.tsx
+│           ├── search-input.tsx
+│           ├── status-badge.tsx
+│           ├── empty-state.tsx
+│           └── paginator.tsx
 │
 └── hooks/
-    ├── useOwners.ts                       # Filtro fuzzy de owners en memoria
-    ├── useWarehouses.ts                   # Filtro fuzzy + filtro por ownerId
-    ├── useDebounce.ts                     # Debounce genérico para búsquedas
-    └── useTheme.ts                        # Gestión de tema (light/dark)
+    ├── useOwners.ts
+    ├── useWarehouses.ts
+    ├── useDebounce.ts
+    └── useTheme.ts
 ```
 
 ---
@@ -196,8 +203,11 @@ wms-frontend/
 | `/` | Dashboard / página de inicio |
 | `/owners` | CRUD de owners |
 | `/bodegas` | CRUD de bodegas, filtrable por owner |
-| `/ubicaciones` | CRUD de ubicaciones — requiere seleccionar bodega (`?warehouseId=`) |
-| `/products` | Catálogo de productos — requiere seleccionar owner (`?ownerId=`) |
+| `/ubicaciones` | CRUD de ubicaciones — requiere `?warehouseId=` |
+| `/contenedores` | Contenedores — filtros: `?ownerId=` → `?warehouseId=` → `?locationId=` (bin) |
+| `/contenedores/[containerId]` | Detalle del contenedor — líneas de inventario (ContainerLines) |
+| `/lotes` | Lotes de productos — filtrable por `?ownerId=` |
+| `/products` | Catálogo de productos paginado — requiere `?ownerId=` |
 | `/products/bulk-upload` | Carga masiva de catálogo vía CSV |
 
 ---
@@ -210,38 +220,28 @@ La URL base se configura en `.env.local` con `NEXT_PUBLIC_API_URL`.
 
 | Recurso | Método | Endpoint | Descripción |
 |---|---|---|---|
-| Owners | `GET` | `/owners` | Listar todos los owners |
-| Owners | `POST` | `/owners` | Crear owner |
-| Owners | `PATCH` | `/owners/:id` | Editar nombre |
-| Owners | `PATCH` | `/owners/:id/status` | Cambiar estado ACTIVE/INACTIVE |
-| Bodegas | `GET` | `/warehouses` | Listar bodegas |
-| Bodegas | `POST` | `/warehouses` | Crear bodega |
-| Bodegas | `PATCH` | `/warehouses/:id` | Editar bodega |
+| Owners | `GET` | `/owners` | Listar todos |
+| Owners | `POST` | `/owners` | Crear |
+| Owners | `PATCH` | `/owners/:id` | Editar |
+| Owners | `PATCH` | `/owners/:id/status` | Cambiar estado |
+| Bodegas | `GET` | `/warehouses?ownerId=` | Listar por owner |
+| Bodegas | `POST` | `/warehouses` | Crear |
+| Bodegas | `PATCH` | `/warehouses/:id` | Editar |
 | Bodegas | `PATCH` | `/warehouses/:id/status` | Cambiar estado |
-| Ubicaciones | `GET` | `/locations?warehouseId=` | Listar ubicaciones de una bodega |
-| Ubicaciones | `POST` | `/locations` | Crear ubicación |
-| Ubicaciones | `PATCH` | `/locations/:id` | Editar ubicación |
-| Ubicaciones | `PATCH` | `/locations/:id/status` | Cambiar estado |
+| Ubicaciones | `GET` | `/locations?warehouseId=` | Listar todas (incluye pasillos, racks y bins) |
+| Ubicaciones | `POST` | `/locations` | Crear |
 | Tipos de ubicación | `GET` | `/location-types` | Listar tipos disponibles |
-| Productos | `GET` | `/products?ownerId=&page=&limit=&q=` | Listar productos paginados |
-| Productos | `POST` | `/products` | Crear producto individual |
-| Productos | `POST` | `/products/bulk-upload` | Carga masiva CSV (multipart/form-data) |
-
-### Estructura de error estándar del backend
-
-El frontend parsea y muestra al usuario los errores con esta forma:
-
-```json
-{
-  "status": 400,
-  "code": "CSV_VALIDATION_ERROR",
-  "message": "El CSV contiene 3 error(es) de validación",
-  "errors": [
-    { "row": 5, "field": "seller_sku", "message": "SKU 'ABC-001' ya existe para este owner" },
-    { "row": 12, "field": "name", "message": "El nombre no puede estar vacío" }
-  ]
-}
-```
+| Contenedores | `GET` | `/inventory-containers?warehouseId=` | Listar por bodega |
+| Contenedores | `GET` | `/inventory-containers?locationId=` | Listar por bin |
+| Contenedores | `GET` | `/inventory-containers/:id` | Obtener por ID |
+| Contenedores | `POST` | `/inventory-containers` | Crear |
+| Líneas | `GET` | `/inventory-containers/:id/lines` | Listar líneas del contenedor |
+| Líneas | `POST` | `/inventory-containers/:id/lines` | Agregar línea |
+| Lotes | `GET` | `/lots` | Listar todos (filtro por owner en cliente) |
+| Lotes | `POST` | `/lots` | Crear lote |
+| Productos | `GET` | `/products?ownerId=&page=&limit=&q=` | Listar paginado |
+| Productos | `POST` | `/products` | Crear individual |
+| Productos | `POST` | `/products/bulk-upload` | Carga masiva CSV |
 
 ---
 
@@ -249,97 +249,84 @@ El frontend parsea y muestra al usuario los errores con esta forma:
 
 ### 1. Server / Client boundary
 
-Cada ruta sigue el mismo patrón de tres capas:
-
 ```
-page.tsx (Server Component)
+page.tsx (Server Component — fetch de datos)
   └── *Client.tsx ('use client' — estado, optimistic, dialogs)
-        └── Componentes de UI (tabla, dialogs, toggles)
+        └── Componentes de UI (tabla, dialogs, badges)
 ```
-
-El `page.tsx` carga los datos en el servidor y los pasa como props al Client. El Client nunca hace fetch directo; consume lo que recibe y gestiona el estado de UI.
 
 ### 2. Server Actions
 
-Los formularios no llaman a la API directamente. Invocan **Server Actions** en `src/app/actions/` que:
-
-1. Re-validan los datos con Zod
-2. Llaman al servicio HTTP correspondiente
-3. Ejecutan `revalidatePath()` para refrescar los datos del Server Component
-4. Retornan `{ success: true } | { error: string }` — nunca lanzan excepciones al cliente
-
-```typescript
-// src/app/actions/owners.ts
-export async function createOwnerAction(data: unknown): Promise<ActionResult> {
-  const parsed = ownerSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-  try {
-    await postOwner(parsed.data);
-    revalidatePath('/owners');
-    return { success: true };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Error al crear owner' };
-  }
-}
-```
+Los formularios invocan **Server Actions** en `src/app/actions/` que re-validan con Zod, llaman al servicio HTTP y ejecutan `revalidatePath()`. Siempre retornan `{ success: true } | { error: string }`.
 
 ### 3. Optimistic Updates (React 19)
 
-Los Client components usan `useOptimistic` para actualizar la UI antes de que responda el servidor. Si el servidor retorna un error, React revierte el estado automáticamente.
-
-Las filas optimistas se identifican por el prefijo `opt-` en el ID y se renderizan con `animate-pulse` mientras están pendientes:
-
-```typescript
-const [optimisticItems, dispatchOptimistic] = useOptimistic(items, reducer);
-
-startTransition(async () => {
-  dispatchOptimistic({ type: 'add', item: tempItem }); // UI actualiza ya
-  const result = await createAction(data);
-  if ('error' in result) setActionError(result.error); // revert si falla
-});
-```
+`useOptimistic` actualiza la UI antes de recibir respuesta del servidor. Las filas optimistas tienen el prefijo `opt-` en el ID y se renderizan con `animate-pulse`. Si el servidor falla, React revierte automáticamente.
 
 ### 4. URL como fuente de verdad para filtros
 
-Los filtros y selecciones persisten en la URL vía `router.replace()`:
+Los filtros persisten en la URL vía `router.push()`. Cada cambio de selección (owner, bodega, bin) reescribe los query params, lo que permite compartir URLs con filtros aplicados.
 
-- `SearchInput` escribe el parámetro `q`
-- `ProductOwnerFilter` / `OwnerFilterSelect` escriben `ownerId`
-- `WarehouseSelector` escribe `warehouseId`
+### 5. Pre-carga única de árbol de locations
 
-El `page.tsx` lee `searchParams` y pasa los valores iniciales al Client, lo que permite compartir URLs con filtros aplicados y que el estado sobreviva a recargas.
+El `ContainerDialog` carga **todas las locations de una bodega en una sola llamada** al abrir, luego filtra pasillos → racks → bins en cliente sin llamadas adicionales. Esto elimina los 3 spinners encadenados del patrón anterior.
 
-### 5. Pantallas "gate" por selección obligatoria
+### 6. Columna de ubicación condicional
 
-`/products` y `/ubicaciones` requieren que el usuario seleccione un owner o una bodega antes de mostrar datos. Cuando el parámetro no está en la URL, el Client renderiza una pantalla de selección con tarjetas clickeables en lugar de mostrar una tabla vacía.
+La tabla de contenedores oculta la columna "Ubicación" cuando hay un bin específico seleccionado en el filtro (`showLocationColumn={!locationId}`), evitando información redundante.
 
-### 6. Lazy loading de dialogs
+### 7. Lazy loading de dialogs
 
-Los dialogs se cargan solo cuando el usuario los abre por primera vez, reduciendo el bundle inicial:
+Los dialogs se cargan con `dynamic()` solo cuando el usuario los abre por primera vez.
 
-```typescript
-const ProductDialog = dynamic(
-  () => import('./ProductDialog').then((m) => m.ProductDialog),
-  { loading: () => null }
-);
-```
+### 8. Streaming con Suspense
 
-### 7. Streaming con Suspense
+Cada ruta tiene `loading.tsx` con skeletons que replican la estructura visual. El usuario ve el layout completo mientras el Server Component resuelve los datos.
 
-Cada ruta tiene su propio `loading.tsx` con skeletons que replican la estructura visual de la página. El usuario ve el layout completo de inmediato mientras el Server Component resuelve los datos del backend.
+---
+
+## Tipos del Dominio (`src/types/inventory.ts`)
+
+| Interface | Campos clave |
+|---|---|
+| `Owner` | `ownerId`, `name`, `status`, `createdAt?` |
+| `Warehouse` | `warehouseId`, `ownerId`, `name`, `countryCode`, `city`, `status` |
+| `Location` | `locationId`, `warehouseId`, `parentLocationId`, `type`, `code`, `active` |
+| `LocationTypeItem` | `typeId`, `name`, `indicator`, `isActive` |
+| `InventoryContainer` | `containerId`, `ownerId`, `warehouseId`, `locationId`, `type`, `status` |
+| `ContainerLine` | `containerLineId`, `containerId`, `productId`, `lotId`, `qtyTotal`, `qtyAvailable`, `qtyReserved` |
+| `Lot` | `lotId`, `productId`, `ownerId`, `supplierId`, `batchCode`, `expiresAt`, `receivedAt` |
+| `Product` | `productId`, `ownerId`, `sellerSku`, `name`, `barcodeUpdEan?`, `requiresUnitTracking`, `hasExpiration`, `status`, `createdAt` |
+| `ProductListItem` | Versión resumida de `Product` para listados paginados |
+
+**Notas de tipos:**
+- `ContainerStatus`: `'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE'`
+- `ContainerType`: `'box' | 'tote' | 'pallet'` (el backend almacena en minúsculas)
+- `LocationType`: `'PASILLO' | 'RACK' | 'BIN'`
+- `expiresAt` / `receivedAt` en `Lot`: formato `"YYYY-MM-DD"` (Java `LocalDate`)
 
 ---
 
 ## Sistema de Diseño — "Logistics Precision"
 
-### Colores (definidos en `globals.css`)
+### Colores (`globals.css`)
 
 | Token | Valor | Uso |
 |---|---|---|
-| `--primary` | `#0072C2` | Steel Blue — botones, cabeceras de tabla, acciones primarias |
-| `--brand-accent` | `#FF8D39` | Safety Amber — alertas, acentos secundarios |
+| `--primary` | `#0072C2` | Steel Blue — botones, acciones primarias |
+| `--brand-accent` | `#FF8D39` | Safety Amber — alertas, acentos |
 | `--background` | `#F4F6F9` | Concrete Gray — fondo de página |
-| Sidebar | `#1B2A3B` | Deep Navy — fondo de navegación lateral |
+| Sidebar | `#1B2A3B` | Deep Navy — navegación lateral |
+
+### Reglas UI Fat-Finger
+
+| Elemento | Especificación |
+|---|---|
+| Botones de acción | `h-14 px-6 text-base font-bold uppercase tracking-wider` |
+| Inputs y Selects | `h-14 text-base` |
+| Items de Select | `py-3` |
+| Filas de tabla | `py-5` (via `DataTable`) |
+| Cabecera de tabla | `py-4 text-xs font-bold uppercase tracking-widest bg-muted/40` |
 
 ### Alias de rutas (`tsconfig.json`)
 
@@ -347,31 +334,7 @@ Cada ruta tiene su propio `loading.tsx` con skeletons que replican la estructura
 @/*  →  ./  (raíz del proyecto, NO src/)
 ```
 
-| Import | Ruta real |
-|---|---|
-| `@/components/ui/button` | `./components/ui/button.tsx` |
-| `@/hooks/useOwners` | `./hooks/useOwners.ts` |
-| `@/src/services/ownerService` | `./src/services/ownerService.ts` |
-| `@/src/types/inventory` | `./src/types/inventory.ts` |
-
-> Los archivos bajo `src/` se importan con el prefijo `@/src/`. No mover archivos de `src/` a la raíz sin actualizar todos los imports.
-
-### Reglas de UI Fat-Finger
-
-La interfaz está optimizada para uso con guantes o pantallas táctiles:
-
-| Elemento | Especificación |
-|---|---|
-| Botones de acción | `h-14 px-6 text-base font-bold uppercase tracking-wider` |
-| Inputs y Selects en formularios | `h-14 text-base` |
-| Items de Select | `py-3` |
-| Filas de tabla | `py-5` (via `DataTable`) |
-| Cabecera de tabla | `py-4 text-xs font-bold uppercase tracking-widest bg-muted/40` |
-| SearchInput | `h-14 pl-12` con Loader2 cuando hay transición activa |
-
-### Signature Visual — Zone-Rail
-
-El ítem activo del sidebar muestra una barra vertical de `3px` a la izquierda (`bg-sidebar-primary rounded-r-full`), que representa la cinta de demarcación de zonas en piso de bodega.
+Los archivos bajo `src/` se importan con `@/src/`. No mover archivos de `src/` a la raíz sin actualizar todos los imports.
 
 ---
 
@@ -380,21 +343,23 @@ El ítem activo del sidebar muestra una barra vertical de `3px` a la izquierda (
 | Pantalla | Estado | Notas |
 |---|---|---|
 | Owners | ✅ Implementado | CRUD completo + optimistic updates |
-| Bodegas | ✅ Implementado | CRUD completo + filtro por owner + selector de ciudad |
-| Ubicaciones | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
-| Productos — Catálogo | ✅ Implementado | Listado paginado, creación individual, gate de owner |
-| Productos — Carga masiva CSV | ✅ Implementado | Drag-and-drop, errores de validación por fila |
-| Login / Autenticación | 🔲 Pendiente | El ownerId se integrará con la sesión del usuario al implementar auth |
-Pantalla | Estado | Notas |
-|---|---|---|
-| Dashboard | ✅ Implementado | KPIs placeholder, accesos rápidos |
-| Carga Masiva CSV | ✅ Implementado | Conectado a `/products/bulk-upload` |
-| Owners | ✅ Implementado | CRUD completo + optimistic updates |
 | Bodegas | ✅ Implementado | CRUD completo + filtro por owner |
 | Ubicaciones | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
-| Recepciones | 🔲 Pendiente | — |
+| Contenedores | ✅ Implementado | Filtros owner → bodega → bin + optimistic |
+| Contenedores — Detalle (Líneas) | ✅ Implementado | Tabla de ContainerLines + agregar línea con lote opcional |
+| Lotes | ✅ Implementado | Crear lote + tabla con badge de vencimiento |
+| Productos — Catálogo | ✅ Implementado | Listado paginado + creación individual |
+| Productos — Carga masiva CSV | ✅ Implementado | Drag-and-drop + errores de validación por fila |
+| Login / Autenticación | 🔲 Pendiente | El ownerId se integrará con la sesión |
 | Movimientos de Stock | 🔲 Pendiente | — |
 | Reportes | 🔲 Pendiente | — |
+
+### Bugs conocidos (pendientes en backend)
+
+| Bug | Impacto | Archivo |
+|---|---|---|
+| `receivedAt` no se persiste en Lot | El campo se envía pero siempre llega `null` en la respuesta | `LotMapper.toDomain` — no recibe el parámetro |
+| `GET /lots` sin filtro por owner | Se cargan todos los lotes y se filtra en cliente | `LotService.getAllLots` — usar `findByOwner_OwnerId` |
 
 ---
 
