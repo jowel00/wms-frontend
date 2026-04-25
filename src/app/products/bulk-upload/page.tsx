@@ -7,33 +7,31 @@ export const metadata: Metadata = {
 
 export default function BulkUploadPage() {
   return (
-    <main className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="p-6 md:p-8 max-w-2xl">
 
-        <header className="mb-6">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
-            Catálogo de Productos
-          </p>
-          <h1 className="text-3xl font-black text-gray-900 uppercase leading-none">
-            Carga Masiva
-          </h1>
-          <p className="text-gray-600 mt-2 text-sm">
-            Sube tu archivo CSV para registrar o actualizar productos en lote.
-          </p>
-        </header>
+      <header className="mb-6">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
+          Catálogo de Productos
+        </p>
+        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
+          Carga Masiva
+        </h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Sube tu archivo CSV para registrar o actualizar productos en lote.
+        </p>
+      </header>
 
-        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
-          <BulkUploadForm />
-        </div>
-
-        <footer className="mt-4 text-xs text-gray-400 text-center">
-          Columnas esperadas:{' '}
-          <code className="bg-gray-200 text-gray-600 px-1 py-0.5 rounded">
-            sellerSku, name, barcodeUpcEan, hasExpiration
-          </code>
-        </footer>
-
+      <div className="bg-card border border-border rounded-lg p-6">
+        <BulkUploadForm />
       </div>
-    </main>
+
+      <footer className="mt-4 text-xs text-muted-foreground/60 text-center">
+        Columnas esperadas:{' '}
+        <code className="bg-muted text-muted-foreground px-1 py-0.5 rounded font-mono">
+          sellerSku, name, barcodeUpcEan, hasExpiration
+        </code>
+      </footer>
+
+    </div>
   );
 }
