@@ -3,9 +3,10 @@
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
-import { Package, Plus, AlertCircle } from 'lucide-react';
+import { Package, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ActionError } from '@/components/ui/action-error';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { buildParams } from '@/src/lib/url';
 import { ContainersTable } from './ContainersTable';
 import { createContainer } from '@/src/app/actions/containers';
 import type { Owner, Warehouse, InventoryContainer, Location } from '@/src/types/inventory';
@@ -68,9 +70,7 @@ function ContainersClientInner({
     : optimisticContainers;
 
   function pushParams(params: Record<string, string | undefined>) {
-    const p = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v); });
-    router.push(`${pathname}?${p.toString()}`);
+    router.push(`${pathname}?${buildParams(params)}`);
   }
 
   function handleOwnerChange(id: string) {
@@ -211,12 +211,7 @@ function ContainersClientInner({
         />
       ) : (
         <>
-          {actionError && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {actionError}
-            </div>
-          )}
+          <ActionError message={actionError} />
 
           <div className="flex items-center gap-3 mb-5">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
