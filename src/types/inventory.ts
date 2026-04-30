@@ -73,6 +73,12 @@ export type ContainerStatus = 'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE';
 // El mapper guarda el tipo en lowercase; los valores válidos son box, tote, pallet
 export type ContainerType = 'box' | 'tote' | 'pallet';
 
+export const CONTAINER_TYPE_LABELS: Record<string, string> = {
+  box: 'Caja',
+  tote: 'Tote',
+  pallet: 'Pallet',
+};
+
 // Refleja InventoryContainerResponse — el backend NO incluye createdAt ni closedAt
 export interface InventoryContainer {
   containerId: string;        // UUID
