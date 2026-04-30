@@ -4,7 +4,8 @@ import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { OwnerStatusToggle } from './OwnerStatusToggle';
+import { StatusToggle } from '@/components/ui/status-toggle';
+import { toggleOwnerStatus } from '@/src/app/actions/owners';
 import type { Owner } from '@/src/types/inventory';
 
 interface OwnersTableProps {
@@ -24,7 +25,10 @@ export function OwnersTable({ owners, onEdit }: OwnersTableProps) {
       header: 'Estado',
       cell: (o) => (
         <div className="flex items-center gap-3">
-          <OwnerStatusToggle ownerId={o.ownerId} status={o.status} />
+          <StatusToggle
+              checked={o.status === 'ACTIVE'}
+              onToggle={(active) => toggleOwnerStatus(o.ownerId, active ? 'ACTIVE' : 'INACTIVE')}
+            />
           <StatusBadge status={o.status} />
         </div>
       ),

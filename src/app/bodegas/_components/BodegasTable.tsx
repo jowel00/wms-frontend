@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { BodegaStatusToggle } from './BodegaStatusToggle';
+import { StatusToggle } from '@/components/ui/status-toggle';
+import { toggleWarehouseStatus } from '@/src/app/actions/warehouses';
 import type { Warehouse } from '@/src/types/inventory';
 
 interface BodegasTableProps {
@@ -39,7 +40,10 @@ export function BodegasTable({ warehouses, onEdit }: BodegasTableProps) {
       header: 'Estado',
       cell: (w) => (
         <div className="flex items-center gap-3">
-          <BodegaStatusToggle warehouseId={w.warehouseId} status={w.status} />
+          <StatusToggle
+              checked={w.status === 'ACTIVE'}
+              onToggle={(active) => toggleWarehouseStatus(w.warehouseId, active ? 'ACTIVE' : 'INACTIVE')}
+            />
           <StatusBadge status={w.status} />
         </div>
       ),
