@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { queryAllContainersLocations } from '@/src/app/actions/containers';
+import { queryAllContainersLocations } from '@/src/app/actions/containerQueries';
 import type { Owner, Warehouse, Location } from '@/src/types/inventory';
 import type { ContainerFormValues } from '@/src/lib/validations/containers';
 
