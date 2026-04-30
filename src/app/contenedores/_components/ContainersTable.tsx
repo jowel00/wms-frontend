@@ -4,20 +4,15 @@ import Link from 'next/link';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ContainerStatusBadge } from './ContainerStatusBadge';
+import { ContainerStatusBadge } from '@/components/ui/container-status-badge';
 import type { InventoryContainer, Location } from '@/src/types/inventory';
+import { CONTAINER_TYPE_LABELS } from '@/src/types/inventory';
 
 interface ContainersTableProps {
   containers: InventoryContainer[];
   locations: Location[];
   showLocationColumn?: boolean;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  box: 'Caja',
-  tote: 'Tote',
-  pallet: 'Pallet',
-};
 
 export function ContainersTable({ containers, locations, showLocationColumn = true }: ContainersTableProps) {
   const locationMap = new Map(locations.map((l) => [l.locationId, l.code]));
@@ -37,7 +32,7 @@ export function ContainersTable({ containers, locations, showLocationColumn = tr
       header: 'Tipo',
       cell: (c) => (
         <Badge variant="outline" className="font-bold text-xs uppercase tracking-wider">
-          {TYPE_LABELS[c.type] ?? c.type}
+          {CONTAINER_TYPE_LABELS[c.type] ?? c.type}
         </Badge>
       ),
     },
