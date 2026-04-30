@@ -76,35 +76,33 @@ wms-frontend/
 │   │   │       ├── OwnerDialog.tsx
 │   │   │       └── OwnerStatusToggle.tsx
 │   │   │
-│   │   ├── bodegas/                       # Gestión de Bodegas (Warehouses)
+│   │   ├── warehouses/                    # Gestión de Bodegas (Warehouses)
 │   │   │   ├── page.tsx
 │   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── BodegasClient.tsx
-│   │   │       ├── BodegasTable.tsx
-│   │   │       ├── BodegaDialog.tsx
-│   │   │       ├── BodegaStatusToggle.tsx
-│   │   │       └── OwnerFilterSelect.tsx
+│   │   │       ├── WarehousesClient.tsx
+│   │   │       ├── WarehousesTable.tsx
+│   │   │       └── WarehouseDialog.tsx
 │   │   │
-│   │   ├── ubicaciones/                   # Gestión de Ubicaciones
+│   │   ├── locations/                     # Gestión de Ubicaciones
 │   │   │   ├── page.tsx
 │   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── UbicacionesClient.tsx
-│   │   │       ├── UbicacionesTable.tsx
-│   │   │       ├── UbicacionDialog.tsx
+│   │   │       ├── LocationsClient.tsx
+│   │   │       ├── LocationsTable.tsx
+│   │   │       ├── LocationDialog.tsx
 │   │   │       ├── LocationTypeBadge.tsx
-│   │   │       └── WarehouseSelector.tsx
+│   │   │       ├── WarehouseSelector.tsx
+│   │   │       └── DrilldownBreadcrumb.tsx
 │   │   │
-│   │   ├── contenedores/                  # Gestión de Contenedores de Inventario
+│   │   ├── containers/                    # Gestión de Contenedores de Inventario
 │   │   │   ├── page.tsx                   # Filtros: owner → bodega → bin (URL params)
 │   │   │   ├── loading.tsx
 │   │   │   ├── _components/
 │   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + optimistic
 │   │   │   │   ├── ContainersTable.tsx    # Columna ubicación condicional + link al detalle
 │   │   │   │   ├── ContainerDialog.tsx    # Carga árbol de locations en 1 sola llamada
-│   │   │   │   ├── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
-│   │   │   │   └── (ContainerStatusToggle futuro)
+│   │   │   │   └── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
 │   │   │   │
 │   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas
 │   │   │       ├── page.tsx               # Fetch: container + lines + products + lots
@@ -114,7 +112,7 @@ wms-frontend/
 │   │   │           ├── ContainerLinesTable.tsx    # Tabla: producto, lote, qty
 │   │   │           └── AddLineDialog.tsx          # Producto → Lote (filtrado) → Cantidad
 │   │   │
-│   │   ├── lotes/                         # Gestión de Lotes (Lots)
+│   │   ├── lots/                          # Gestión de Lotes (Lots)
 │   │   │   ├── page.tsx                   # Carga todos los lotes, filtra por owner en servidor
 │   │   │   ├── loading.tsx
 │   │   │   └── _components/
@@ -174,18 +172,26 @@ wms-frontend/
 ├── components/
 │   ├── layout/
 │   │   ├── MainLayout.tsx
+│   │   ├── navConfig.ts                   # Hrefs: /owners /warehouses /locations /containers /lots
 │   │   └── Sidebar.tsx                    # Nav: Dashboard, Owners, Bodegas, Ubicaciones,
 │   │                                      #      Contenedores, Lotes, Productos, Carga Masiva
 │   │
 │   └── ui/
-│       ├── (shadcn instalados vía CLI)
+│       ├── shadcn (vía CLI)               # button, badge, dialog, form, input, label, select,
+│       │                                  # separator, skeleton, switch, table, tooltip,
+│       │                                  # command, popover
 │       └── propios
-│           ├── data-table.tsx
-│           ├── table-skeleton.tsx
-│           ├── search-input.tsx
-│           ├── status-badge.tsx
-│           ├── empty-state.tsx
-│           └── paginator.tsx
+│           ├── action-error.tsx           # Bloque de error reutilizable para Server Actions
+│           ├── container-status-badge.tsx # CREATED / ACTIVE / CLOSED / QUARANTINE
+│           ├── data-table.tsx             # DataTable<T> genérico — filas fat-finger py-5
+│           ├── empty-state.tsx            # Estado vacío con ícono, título y acción opcional
+│           ├── owner-select.tsx           # Select de owner controlado (sin routing interno)
+│           ├── page-header.tsx            # Encabezado de página: section + title + description
+│           ├── paginator.tsx              # Paginación numérica
+│           ├── search-input.tsx           # Input h-14 con spinner Loader2 mientras isPending
+│           ├── status-badge.tsx           # ACTIVE (verde) / INACTIVE (secondary)
+│           ├── status-toggle.tsx          # Switch genérico — onToggle: (active) => Promise<ActionResult>
+│           └── table-skeleton.tsx         # Filas skeleton para loading.tsx
 │
 └── hooks/
     ├── useOwners.ts
@@ -202,11 +208,11 @@ wms-frontend/
 |---|---|
 | `/` | Dashboard / página de inicio |
 | `/owners` | CRUD de owners |
-| `/bodegas` | CRUD de bodegas, filtrable por owner |
-| `/ubicaciones` | CRUD de ubicaciones — requiere `?warehouseId=` |
-| `/contenedores` | Contenedores — filtros: `?ownerId=` → `?warehouseId=` → `?locationId=` (bin) |
-| `/contenedores/[containerId]` | Detalle del contenedor — líneas de inventario (ContainerLines) |
-| `/lotes` | Lotes de productos — filtrable por `?ownerId=` |
+| `/warehouses` | CRUD de bodegas, filtrable por owner |
+| `/locations` | CRUD de ubicaciones — requiere `?warehouseId=` |
+| `/containers` | Contenedores — filtros: `?ownerId=` → `?warehouseId=` → `?locationId=` (bin) |
+| `/containers/[containerId]` | Detalle del contenedor — líneas de inventario (ContainerLines) |
+| `/lots` | Lotes de productos — filtrable por `?ownerId=` |
 | `/products` | Catálogo de productos paginado — requiere `?ownerId=` |
 | `/products/bulk-upload` | Carga masiva de catálogo vía CSV |
 
@@ -340,14 +346,14 @@ Los archivos bajo `src/` se importan con `@/src/`. No mover archivos de `src/` a
 
 ## Estado Actual del Proyecto
 
-| Pantalla | Estado | Notas |
-|---|---|---|
-| Owners | ✅ Implementado | CRUD completo + optimistic updates |
-| Bodegas | ✅ Implementado | CRUD completo + filtro por owner |
-| Ubicaciones | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
-| Contenedores | ✅ Implementado | Filtros owner → bodega → bin + optimistic |
-| Contenedores — Detalle (Líneas) | ✅ Implementado | Tabla de ContainerLines + agregar línea con lote opcional |
-| Lotes | ✅ Implementado | Crear lote + tabla con badge de vencimiento |
+| Pantalla | Ruta | Estado | Notas |
+|---|---|---|---|
+| Owners | `/owners` | ✅ Implementado | CRUD completo + optimistic updates |
+| Bodegas | `/warehouses` | ✅ Implementado | CRUD completo + filtro por owner |
+| Ubicaciones | `/locations` | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
+| Contenedores | `/containers` | ✅ Implementado | Filtros owner → bodega → bin + optimistic |
+| Contenedores — Detalle (Líneas) | `/containers/[id]` | ✅ Implementado | Tabla de ContainerLines + agregar línea con lote opcional |
+| Lotes | `/lots` | ✅ Implementado | Crear lote + tabla con badge de vencimiento |
 | Productos — Catálogo | ✅ Implementado | Listado paginado + creación individual |
 | Productos — Carga masiva CSV | ✅ Implementado | Drag-and-drop + errores de validación por fila |
 | Login / Autenticación | 🔲 Pendiente | El ownerId se integrará con la sesión |
