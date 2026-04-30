@@ -2,14 +2,16 @@
 
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Warehouse as WarehouseIcon, Plus, AlertCircle } from 'lucide-react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Warehouse as WarehouseIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ActionError } from '@/components/ui/action-error';
+import { OwnerSelect } from '@/components/ui/owner-select';
 import { useWarehouses } from '@/hooks/useWarehouses';
 import { createWarehouse, updateWarehouse } from '@/src/app/actions/warehouses';
 import { BodegasTable } from './BodegasTable';
-import { OwnerFilterSelect } from './OwnerFilterSelect';
 import type { Owner, Warehouse } from '@/src/types/inventory';
 import type { WarehouseFormValues } from '@/src/lib/validations/warehouses';
 
@@ -35,6 +37,9 @@ function BodegasClientInner({
   initialSearch,
   initialOwnerFilter,
 }: BodegasClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [, startActionTransition] = useTransition();
 
   const [optimisticWarehouses, dispatchOptimistic] = useOptimistic(
@@ -55,6 +60,17 @@ function BodegasClientInner({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  function handleOwnerFilter(val: string) {
+    setOwnerFilter(val);
+    const params = new URLSearchParams(searchParams.toString());
+    if (val) {
+      params.set('ownerId', val);
+    } else {
+      params.delete('ownerId');
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  }
 
   function openCreate() {
     setEditingWarehouse(null);
@@ -94,12 +110,7 @@ function BodegasClientInner({
 
   return (
     <>
-      {actionError && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {actionError}
-        </div>
-      )}
+      <ActionError message={actionError} />
 
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         <SearchInput
@@ -108,7 +119,7 @@ function BodegasClientInner({
           onSearch={setSearch}
           className="w-72"
         />
-        <OwnerFilterSelect owners={owners} value={ownerFilter} onChange={setOwnerFilter} />
+        <OwnerSelect owners={owners} value={ownerFilter} onChange={handleOwnerFilter} className="w-60" />
         <Button
           onClick={openCreate}
           className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"

@@ -2,10 +2,11 @@
 
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Users, Plus, AlertCircle } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ActionError } from '@/components/ui/action-error';
 import { useOwners } from '@/hooks/useOwners';
 import { createOwner, updateOwner } from '@/src/app/actions/owners';
 import { OwnersTable } from './OwnersTable';
@@ -81,12 +82,7 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
 
   return (
     <>
-      {actionError && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {actionError}
-        </div>
-      )}
+      <ActionError message={actionError} />
 
       <div className="flex items-center gap-3 mb-5">
         <SearchInput
