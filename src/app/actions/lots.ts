@@ -19,7 +19,7 @@ export async function createLot(data: unknown): Promise<ActionResult> {
       expiresAt: expiresAt || undefined,
       receivedAt: receivedAt || undefined,
     });
-    revalidatePath('/lotes');
+    revalidatePath('/lots');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear lote' };

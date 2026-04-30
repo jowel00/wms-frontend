@@ -14,7 +14,7 @@ export async function createWarehouse(data: unknown): Promise<ActionResult> {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
     await postWarehouse(parsed.data);
-    revalidatePath('/bodegas');
+    revalidatePath('/warehouses');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear bodega' };
@@ -26,7 +26,7 @@ export async function updateWarehouse(id: string, data: unknown): Promise<Action
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
     await patchWarehouse(id, parsed.data);
-    revalidatePath('/bodegas');
+    revalidatePath('/warehouses');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al actualizar bodega' };
@@ -39,7 +39,7 @@ export async function toggleWarehouseStatus(
 ): Promise<ActionResult> {
   try {
     await patchWarehouseStatus(id, status);
-    revalidatePath('/bodegas');
+    revalidatePath('/warehouses');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al cambiar estado' };

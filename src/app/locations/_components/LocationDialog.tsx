@@ -29,19 +29,19 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
   BIN: 'Posición individual de almacenamiento dentro de un rack. Aquí se ubica el inventario.',
 };
 
-interface UbicacionDialogProps {
+interface LocationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   warehouseId: string;
   onSubmit: (data: LocationFormValues) => void;
 }
 
-export function UbicacionDialog({
+export function LocationDialog({
   open,
   onOpenChange,
   warehouseId,
   onSubmit,
-}: UbicacionDialogProps) {
+}: LocationDialogProps) {
   const [locationTypes, setLocationTypes] = useState<LocationTypeItem[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
 

@@ -13,7 +13,7 @@ interface PageProps {
   }>;
 }
 
-export default async function ContenedoresPage({ searchParams }: PageProps) {
+export default async function ContainersPage({ searchParams }: PageProps) {
   const { ownerId, warehouseId, locationId } = await searchParams;
 
   const owners = await fetchOwners().catch(() => []);

@@ -1,13 +1,13 @@
 import { fetchAllWarehouses } from '@/src/services/warehouseService';
 import { fetchOwners } from '@/src/services/ownerService';
-import { BodegasClient } from './_components/BodegasClient';
+import { WarehousesClient } from './_components/WarehousesClient';
 import { PageHeader } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{ q?: string; ownerId?: string }>;
 }
 
-export default async function BodegasPage({ searchParams }: PageProps) {
+export default async function WarehousesPage({ searchParams }: PageProps) {
   const { q, ownerId } = await searchParams;
 
   const owners = await fetchOwners().catch(() => []);
@@ -20,7 +20,7 @@ export default async function BodegasPage({ searchParams }: PageProps) {
         title="Bodegas"
         description="Gestiona los almacenes y bodegas por owner y ubicación geográfica."
       />
-      <BodegasClient
+      <WarehousesClient
         warehouses={warehouses}
         owners={owners}
         initialSearch={q ?? ''}

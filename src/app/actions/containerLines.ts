@@ -20,7 +20,7 @@ export async function createContainerLine(
       lotId: parsed.data.lotId,
       qtyTotal: parsed.data.qtyTotal,
     });
-    revalidatePath(`/contenedores/${containerId}`);
+    revalidatePath(`/containers/${containerId}`);
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al agregar línea' };

@@ -9,12 +9,12 @@ import { StatusToggle } from '@/components/ui/status-toggle';
 import { toggleWarehouseStatus } from '@/src/app/actions/warehouses';
 import type { Warehouse } from '@/src/types/inventory';
 
-interface BodegasTableProps {
+interface WarehousesTableProps {
   warehouses: Warehouse[];
   onEdit: (warehouse: Warehouse) => void;
 }
 
-export function BodegasTable({ warehouses, onEdit }: BodegasTableProps) {
+export function WarehousesTable({ warehouses, onEdit }: WarehousesTableProps) {
   const columns: Column<Warehouse>[] = [
     {
       key: 'name',

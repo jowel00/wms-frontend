@@ -8,7 +8,7 @@ interface PageProps {
   searchParams: Promise<{ ownerId?: string }>;
 }
 
-export default async function LotesPage({ searchParams }: PageProps) {
+export default async function LotsPage({ searchParams }: PageProps) {
   const { ownerId } = await searchParams;
 
   const owners = await fetchOwners().catch(() => []);

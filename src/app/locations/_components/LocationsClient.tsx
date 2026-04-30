@@ -8,18 +8,18 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ActionError } from '@/components/ui/action-error';
 import { WarehouseSelector } from './WarehouseSelector';
-import { UbicacionesTable } from './UbicacionesTable';
+import { LocationsTable } from './LocationsTable';
 import { DrilldownBreadcrumb } from './DrilldownBreadcrumb';
 import { createLocation } from '@/src/app/actions/locations';
 import type { Location, Warehouse } from '@/src/types/inventory';
 import type { LocationFormValues } from '@/src/lib/validations/locations';
 
-const UbicacionDialog = dynamic(
-  () => import('./UbicacionDialog').then((m) => m.UbicacionDialog),
+const LocationDialog = dynamic(
+  () => import('./LocationDialog').then((m) => m.LocationDialog),
   { loading: () => null }
 );
 
-interface UbicacionesClientProps {
+interface LocationsClientProps {
   warehouses: Warehouse[];
   locations: Location[];
   warehouseId: string;
@@ -63,7 +63,7 @@ const LEVEL_META = {
   },
 } as const;
 
-function UbicacionesClientInner({
+function LocationsClientInner({
   warehouses,
   locations,
   warehouseId,
@@ -71,7 +71,7 @@ function UbicacionesClientInner({
   aisleCode,
   rackId,
   rackCode,
-}: UbicacionesClientProps) {
+}: LocationsClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [, startActionTransition] = useTransition();
@@ -207,13 +207,13 @@ function UbicacionesClientInner({
               action={{ label: '+ Agregar la primera', onClick: () => setDialogOpen(true) }}
             />
           ) : (
-            <UbicacionesTable
+            <LocationsTable
               locations={optimisticLocations}
               onRowClick={level !== 'BIN' ? handleRowClick : undefined}
             />
           )}
 
-          <UbicacionDialog
+          <LocationDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
             warehouseId={warehouseId}
@@ -225,10 +225,10 @@ function UbicacionesClientInner({
   );
 }
 
-export function UbicacionesClient(props: UbicacionesClientProps) {
+export function LocationsClient(props: LocationsClientProps) {
   return (
     <Suspense>
-      <UbicacionesClientInner {...props} />
+      <LocationsClientInner {...props} />
     </Suspense>
   );
 }

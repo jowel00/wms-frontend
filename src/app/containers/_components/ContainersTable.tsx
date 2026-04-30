@@ -62,7 +62,7 @@ export function ContainersTable({ containers, locations, showLocationColumn = tr
       cell: (c) =>
         c.containerId.startsWith('opt-') ? null : (
           <Button asChild variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-wider">
-            <Link href={`/contenedores/${c.containerId}`}>Ver líneas →</Link>
+            <Link href={`/containers/${c.containerId}`}>Ver líneas →</Link>
           </Button>
         ),
     },

@@ -15,7 +15,7 @@ export async function createLocation(data: unknown): Promise<ActionResult> {
       typeId: parsed.data.typeId,
       parentLocationId: parsed.data.parentLocationId,
     });
-    revalidatePath('/ubicaciones');
+    revalidatePath('/locations');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear ubicación' };
@@ -26,7 +26,7 @@ export async function createLocation(data: unknown): Promise<ActionResult> {
 export async function updateLocation(id: string, _data: unknown): Promise<ActionResult> {
   try {
     await deactivateLocation(id);
-    revalidatePath('/ubicaciones');
+    revalidatePath('/locations');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al desactivar ubicación' };

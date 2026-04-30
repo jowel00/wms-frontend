@@ -49,7 +49,7 @@ import type { Owner, Warehouse } from '@/src/types/inventory';
 
 const MAX_WAREHOUSES_PER_OWNER = 2;
 
-interface BodegaDialogProps {
+interface WarehouseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   warehouse?: Warehouse | null;
@@ -58,14 +58,14 @@ interface BodegaDialogProps {
   onSubmit: (data: WarehouseFormValues) => void;
 }
 
-export function BodegaDialog({
+export function WarehouseDialog({
   open,
   onOpenChange,
   warehouse,
   owners,
   warehouses,
   onSubmit,
-}: BodegaDialogProps) {
+}: WarehouseDialogProps) {
   const [cityOpen, setCityOpen] = useState(false);
   const activeOwners = owners.filter((o) => o.status === 'ACTIVE');
 

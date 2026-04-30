@@ -1,7 +1,7 @@
 import { fetchAllWarehouses } from '@/src/services/warehouseService';
 import { fetchLocations } from '@/src/services/locationService';
 import { fetchOwners } from '@/src/services/ownerService';
-import { UbicacionesClient } from './_components/UbicacionesClient';
+import { LocationsClient } from './_components/LocationsClient';
 import { PageHeader } from '@/components/ui/page-header';
 
 interface PageProps {
@@ -14,7 +14,7 @@ interface PageProps {
   }>;
 }
 
-export default async function UbicacionesPage({ searchParams }: PageProps) {
+export default async function LocationsPage({ searchParams }: PageProps) {
   const { warehouseId, aisleId, aisleCode, rackId, rackCode } = await searchParams;
 
   // parentLocationId determina el nivel actual:
@@ -37,7 +37,7 @@ export default async function UbicacionesPage({ searchParams }: PageProps) {
         title="Ubicaciones"
         description="Explora y administra tus bodegas por niveles — Pasillo → Rack → Bin."
       />
-      <UbicacionesClient
+      <LocationsClient
         warehouses={warehouses}
         locations={locations}
         warehouseId={warehouseId ?? ''}

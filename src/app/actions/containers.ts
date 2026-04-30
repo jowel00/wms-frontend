@@ -10,7 +10,7 @@ export async function createContainer(data: unknown): Promise<ActionResult> {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
     await postContainer(parsed.data);
-    revalidatePath('/contenedores');
+    revalidatePath('/containers');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear contenedor' };
@@ -20,7 +20,7 @@ export async function createContainer(data: unknown): Promise<ActionResult> {
 export async function closeContainerAction(id: string): Promise<ActionResult> {
   try {
     await closeContainer(id);
-    revalidatePath('/contenedores');
+    revalidatePath('/containers');
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al cerrar contenedor' };

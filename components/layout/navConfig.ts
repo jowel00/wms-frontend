@@ -21,11 +21,11 @@ export type NavItem = {
 export const NAV_MAIN: NavItem[] = [
   { label: 'Dashboard',    href: '/',             icon: LayoutDashboard, pageName: 'Inicio'        },
   { label: 'Owners',       href: '/owners',        icon: Users,           pageName: 'Owners'        },
-  { label: 'Bodegas',      href: '/bodegas',       icon: Warehouse,       pageName: 'Bodegas'       },
-  { label: 'Ubicaciones',  href: '/ubicaciones',   icon: MapPin,          pageName: 'Ubicaciones'   },
+  { label: 'Bodegas',      href: '/warehouses',    icon: Warehouse,       pageName: 'Bodegas'       },
+  { label: 'Ubicaciones',  href: '/locations',     icon: MapPin,          pageName: 'Ubicaciones'   },
   { label: 'Productos',    href: '/products',      icon: Package,         pageName: 'Productos'     },
-  { label: 'Contenedores', href: '/contenedores',  icon: Archive,         pageName: 'Contenedores'  },
-  { label: 'Lotes',        href: '/lotes',         icon: Layers,          pageName: 'Lotes'         },
+  { label: 'Contenedores', href: '/containers',    icon: Archive,         pageName: 'Contenedores'  },
+  { label: 'Lotes',        href: '/lots',          icon: Layers,          pageName: 'Lotes'         },
 ];
 
 export const NAV_OPERATIONS: NavItem[] = [

@@ -6,12 +6,12 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { LocationTypeBadge } from './LocationTypeBadge';
 import type { Location } from '@/src/types/inventory';
 
-interface UbicacionesTableProps {
+interface LocationsTableProps {
   locations: Location[];
   onRowClick?: (location: Location) => void;
 }
 
-export function UbicacionesTable({ locations, onRowClick }: UbicacionesTableProps) {
+export function LocationsTable({ locations, onRowClick }: LocationsTableProps) {
   const isLeaf = (l: Location) => l.type === 'BIN';
 
   const columns: Column<Location>[] = [

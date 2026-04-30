@@ -11,12 +11,12 @@ import { ActionError } from '@/components/ui/action-error';
 import { OwnerSelect } from '@/components/ui/owner-select';
 import { useWarehouses } from '@/hooks/useWarehouses';
 import { createWarehouse, updateWarehouse } from '@/src/app/actions/warehouses';
-import { BodegasTable } from './BodegasTable';
+import { WarehousesTable } from './WarehousesTable';
 import type { Owner, Warehouse } from '@/src/types/inventory';
 import type { WarehouseFormValues } from '@/src/lib/validations/warehouses';
 
-const BodegaDialog = dynamic(
-  () => import('./BodegaDialog').then((m) => m.BodegaDialog),
+const WarehouseDialog = dynamic(
+  () => import('./WarehouseDialog').then((m) => m.WarehouseDialog),
   { loading: () => null }
 );
 
@@ -24,19 +24,19 @@ type OptimisticAction =
   | { type: 'add'; warehouse: Warehouse }
   | { type: 'update'; warehouse: Warehouse };
 
-interface BodegasClientProps {
+interface WarehousesClientProps {
   warehouses: Warehouse[];
   owners: Owner[];
   initialSearch: string;
   initialOwnerFilter: string;
 }
 
-function BodegasClientInner({
+function WarehousesClientInner({
   warehouses,
   owners,
   initialSearch,
   initialOwnerFilter,
-}: BodegasClientProps) {
+}: WarehousesClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -146,10 +146,10 @@ function BodegasClientInner({
           }
         />
       ) : (
-        <BodegasTable warehouses={optimisticFiltered} onEdit={openEdit} />
+        <WarehousesTable warehouses={optimisticFiltered} onEdit={openEdit} />
       )}
 
-      <BodegaDialog
+      <WarehouseDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         warehouse={editingWarehouse}
@@ -161,10 +161,10 @@ function BodegasClientInner({
   );
 }
 
-export function BodegasClient(props: BodegasClientProps) {
+export function WarehousesClient(props: WarehousesClientProps) {
   return (
     <Suspense>
-      <BodegasClientInner {...props} />
+      <WarehousesClientInner {...props} />
     </Suspense>
   );
 }
