@@ -2,14 +2,16 @@
 
 import { useState, useOptimistic, useTransition } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, AlertCircle, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ContainerStatusBadge } from '@/src/app/contenedores/_components/ContainerStatusBadge';
+import { ContainerStatusBadge } from '@/components/ui/container-status-badge';
+import { ActionError } from '@/components/ui/action-error';
 import { ContainerLinesTable } from './ContainerLinesTable';
 import { AddLineDialog } from './AddLineDialog';
 import { createContainerLine } from '@/src/app/actions/containerLines';
 import type { InventoryContainer, ContainerLine, ProductListItem, Lot } from '@/src/types/inventory';
+import { CONTAINER_TYPE_LABELS } from '@/src/types/inventory';
 import type { ContainerLineFormValues } from '@/src/lib/validations/containerLines';
 
 interface ContainerDetailClientProps {
@@ -56,12 +58,6 @@ export function ContainerDetailClient({
     });
   }
 
-  const TYPE_LABELS: Record<string, string> = {
-    box: 'Caja',
-    tote: 'Tote',
-    pallet: 'Pallet',
-  };
-
   return (
     <>
       {/* Breadcrumb */}
@@ -86,7 +82,7 @@ export function ContainerDetailClient({
         <div className="flex flex-col gap-1">
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo</span>
           <span className="font-semibold text-base">
-            {TYPE_LABELS[container.type] ?? container.type.toUpperCase()}
+            {CONTAINER_TYPE_LABELS[container.type] ?? container.type.toUpperCase()}
           </span>
         </div>
         <div className="flex flex-col gap-1">
@@ -118,12 +114,7 @@ export function ContainerDetailClient({
         </Button>
       </div>
 
-      {actionError && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {actionError}
-        </div>
-      )}
+      <ActionError message={actionError} />
 
       {optimisticLines.length === 0 ? (
         <EmptyState

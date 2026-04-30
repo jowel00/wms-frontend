@@ -3,9 +3,10 @@
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
-import { MapPin, Rows3, Archive, Plus, AlertCircle } from 'lucide-react';
+import { MapPin, Rows3, Archive, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ActionError } from '@/components/ui/action-error';
 import { WarehouseSelector } from './WarehouseSelector';
 import { UbicacionesTable } from './UbicacionesTable';
 import { DrilldownBreadcrumb } from './DrilldownBreadcrumb';
@@ -36,6 +37,31 @@ function getLevel(warehouseId: string, aisleId?: string, rackId?: string): Drill
   if (aisleId) return 'RACK';
   return 'PASILLO';
 }
+
+const LEVEL_META = {
+  WAREHOUSE: { icon: MapPin, title: '', hint: '', emptyTitle: '', emptyDesc: '' },
+  PASILLO: {
+    icon: Rows3,
+    title: 'Pasillos',
+    hint: 'Haz clic en un pasillo para explorar sus racks.',
+    emptyTitle: 'Sin pasillos',
+    emptyDesc: 'Esta bodega aún no tiene pasillos. Crea el primero para empezar a organizar el espacio.',
+  },
+  RACK: {
+    icon: Archive,
+    title: 'Racks',
+    hint: 'Haz clic en un rack para ver sus bins (posiciones de almacenamiento).',
+    emptyTitle: 'Sin racks',
+    emptyDesc: 'Este pasillo aún no tiene racks. Agrega uno para poder crear bins.',
+  },
+  BIN: {
+    icon: MapPin,
+    title: 'Bins',
+    hint: 'Los bins son las posiciones individuales donde se ubica el inventario.',
+    emptyTitle: 'Sin bins',
+    emptyDesc: 'Este rack aún no tiene bins. Agrega el primero para comenzar a almacenar inventario.',
+  },
+} as const;
 
 function UbicacionesClientInner({
   warehouses,
@@ -124,30 +150,11 @@ function UbicacionesClientInner({
     return items;
   })() : [];
 
-  const levelMeta = {
-    WAREHOUSE: { icon: MapPin, title: '', hint: '', emptyTitle: '', emptyDesc: '' },
-    PASILLO: {
-      icon: Rows3,
-      title: 'Pasillos',
-      hint: 'Haz clic en un pasillo para explorar sus racks.',
-      emptyTitle: 'Sin pasillos',
-      emptyDesc: 'Esta bodega aún no tiene pasillos. Crea el primero para empezar a organizar el espacio.',
-    },
-    RACK: {
-      icon: Archive,
-      title: `Racks — ${aisleCode}`,
-      hint: 'Haz clic en un rack para ver sus bins (posiciones de almacenamiento).',
-      emptyTitle: 'Sin racks',
-      emptyDesc: 'Este pasillo aún no tiene racks. Agrega uno para poder crear bins.',
-    },
-    BIN: {
-      icon: MapPin,
-      title: `Bins — ${rackCode}`,
-      hint: 'Los bins son las posiciones individuales donde se ubica el inventario.',
-      emptyTitle: 'Sin bins',
-      emptyDesc: 'Este rack aún no tiene bins. Agrega el primero para comenzar a almacenar inventario.',
-    },
-  } as const;
+  const meta = LEVEL_META[level];
+  const levelTitle =
+    level === 'RACK' ? `Racks — ${aisleCode}` :
+    level === 'BIN'  ? `Bins — ${rackCode}`   :
+    meta.title;
 
   return (
     <>
@@ -167,22 +174,17 @@ function UbicacionesClientInner({
             <DrilldownBreadcrumb items={breadcrumbItems} />
           )}
 
-          {levelMeta[level].hint && (
+          {meta.hint && (
             <p className="text-sm text-muted-foreground mb-5">
-              {levelMeta[level].hint}
+              {meta.hint}
             </p>
           )}
 
-          {actionError && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {actionError}
-            </div>
-          )}
+          <ActionError message={actionError} />
 
           <div className="flex items-center gap-3 mb-5">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              {levelMeta[level].title}
+              {levelTitle}
               <span className="ml-2 font-normal normal-case tracking-normal">
                 ({optimisticLocations.length})
               </span>
@@ -199,9 +201,9 @@ function UbicacionesClientInner({
 
           {optimisticLocations.length === 0 ? (
             <EmptyState
-              icon={levelMeta[level].icon}
-              title={levelMeta[level].emptyTitle}
-              description={levelMeta[level].emptyDesc}
+              icon={meta.icon}
+              title={meta.emptyTitle}
+              description={meta.emptyDesc}
               action={{ label: '+ Agregar la primera', onClick: () => setDialogOpen(true) }}
             />
           ) : (
