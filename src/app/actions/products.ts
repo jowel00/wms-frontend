@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { productSchema } from '@/src/lib/validations/products';
 import { createProduct } from '@/src/services/productService';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createProductAction(data: unknown): Promise<ActionResult> {
   const parsed = productSchema.safeParse(data);

@@ -7,8 +7,7 @@ import {
   patchWarehouse,
   patchWarehouseStatus,
 } from '@/src/services/warehouseService';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createWarehouse(data: unknown): Promise<ActionResult> {
   const parsed = warehouseSchema.safeParse(data);

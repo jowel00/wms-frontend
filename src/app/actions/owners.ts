@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { ownerSchema } from '@/src/lib/validations/owners';
 import { postOwner, patchOwner, patchOwnerStatus } from '@/src/services/ownerService';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createOwner(data: unknown): Promise<ActionResult> {
   const parsed = ownerSchema.safeParse(data);

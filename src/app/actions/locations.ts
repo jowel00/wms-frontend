@@ -4,8 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { locationSchema } from '@/src/lib/validations/locations';
 import { postLocation, deactivateLocation, fetchLocations, fetchLocationTypes } from '@/src/services/locationService';
 import type { Location, LocationTypeItem } from '@/src/types/inventory';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createLocation(data: unknown): Promise<ActionResult> {
   const parsed = locationSchema.safeParse(data);

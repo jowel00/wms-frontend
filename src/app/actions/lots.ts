@@ -5,8 +5,7 @@ import { lotSchema } from '@/src/lib/validations/lots';
 import { postLot } from '@/src/services/lotService';
 import { fetchProducts } from '@/src/services/productService';
 import type { ProductListItem } from '@/src/types/inventory';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createLot(data: unknown): Promise<ActionResult> {
   const parsed = lotSchema.safeParse(data);

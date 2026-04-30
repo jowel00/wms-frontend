@@ -6,8 +6,7 @@ import { postContainerLine } from '@/src/services/containerLineService';
 import { fetchProducts } from '@/src/services/productService';
 import { fetchLots } from '@/src/services/lotService';
 import type { ProductListItem, Lot } from '@/src/types/inventory';
-
-type ActionResult = { success: true } | { error: string };
+import type { ActionResult } from '@/src/types/actions';
 
 export async function createContainerLine(
   containerId: string,
