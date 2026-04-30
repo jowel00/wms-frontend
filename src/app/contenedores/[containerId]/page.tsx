@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { fetchContainerById } from '@/src/services/containerService';
+import { PageHeader } from '@/components/ui/page-header';
 import { fetchContainerLines } from '@/src/services/containerLineService';
 import { fetchAllLocations } from '@/src/services/locationService';
 import { fetchProducts } from '@/src/services/productService';
@@ -31,14 +32,10 @@ export default async function ContainerDetailPage({ params }: PageProps) {
 
   return (
     <div className="p-6 md:p-8">
-      <header className="mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Contenedores
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          {container.type.toUpperCase()} · {container.containerId.slice(0, 8).toUpperCase()}
-        </h1>
-      </header>
+      <PageHeader
+        section="Contenedores"
+        title={`${container.type.toUpperCase()} · ${container.containerId.slice(0, 8).toUpperCase()}`}
+      />
 
       <ContainerDetailClient
         container={container}

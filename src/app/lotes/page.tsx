@@ -1,4 +1,5 @@
 import { fetchOwners } from '@/src/services/ownerService';
+import { PageHeader } from '@/components/ui/page-header';
 import { fetchLots } from '@/src/services/lotService';
 import { fetchProducts } from '@/src/services/productService';
 import { LotsClient } from './_components/LotsClient';
@@ -24,17 +25,11 @@ export default async function LotesPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-8">
-      <header className="mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Inventario
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          Lotes
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Gestiona los lotes de productos con trazabilidad de vencimiento y recepción.
-        </p>
-      </header>
+      <PageHeader
+        section="Inventario"
+        title="Lotes"
+        description="Gestiona los lotes de productos con trazabilidad de vencimiento y recepción."
+      />
 
       <LotsClient
         owners={owners}

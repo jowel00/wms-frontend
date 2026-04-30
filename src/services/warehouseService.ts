@@ -13,6 +13,11 @@ export async function fetchWarehouses(ownerId: string): Promise<Warehouse[]> {
   return res.json();
 }
 
+export async function fetchAllWarehouses(ownerIds: string[]): Promise<Warehouse[]> {
+  const results = await Promise.all(ownerIds.map((id) => fetchWarehouses(id).catch(() => [])));
+  return results.flat();
+}
+
 // Backend acepta: { ownerId, name, countryCode, city } — NO incluye country
 export async function postWarehouse(data: {
   name: string;

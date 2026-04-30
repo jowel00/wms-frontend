@@ -3,6 +3,7 @@ import { fetchProducts, type ProductsListResponse } from '@/src/services/product
 import { fetchOwners } from '@/src/services/ownerService';
 import { ProductsClient } from './_components/ProductsClient';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { PageHeader } from '@/components/ui/page-header';
 
 // En Next.js 15+/16, searchParams es una Promesa — se consume con await
 interface PageProps {
@@ -31,19 +32,15 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-8">
-      <div className="mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Inventario
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          Productos
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {ownerId
+      <PageHeader
+        section="Inventario"
+        title="Productos"
+        description={
+          ownerId
             ? `${productsData.total.toLocaleString('es-CO')} productos registrados`
-            : 'Selecciona un owner para ver sus productos'}
-        </p>
-      </div>
+            : 'Selecciona un owner para ver sus productos'
+        }
+      />
 
       {/* Suspense necesario porque ProductsClient usa useSearchParams internamente */}
       <Suspense fallback={<TableSkeleton columns={5} />}>

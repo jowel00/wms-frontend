@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
   title: 'Dashboard | WMS DeRocha',
@@ -27,17 +28,11 @@ export default function DashboardPage() {
   return (
     <div className="p-6 md:p-8 max-w-5xl">
 
-      <header className="mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Vision Boosters
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Panel principal de operaciones — DeRocha WMS
-        </p>
-      </header>
+      <PageHeader
+        section="Vision Boosters"
+        title="Dashboard"
+        description="Panel principal de operaciones — DeRocha WMS"
+      />
 
       <section aria-label="Indicadores clave" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <KpiCard label="Productos Totales" value="—" sub="Catálogo activo" />

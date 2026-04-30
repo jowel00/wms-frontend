@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BulkUploadForm } from './BulkUploadForm';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
   title: 'Carga Masiva de Catálogo | WMS',
@@ -9,17 +10,12 @@ export default function BulkUploadPage() {
   return (
     <div className="p-6 md:p-8 max-w-2xl">
 
-      <header className="mb-6">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Catálogo de Productos
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          Carga Masiva
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Sube tu archivo CSV para registrar o actualizar productos en lote.
-        </p>
-      </header>
+      <PageHeader
+        section="Catálogo de Productos"
+        title="Carga Masiva"
+        description="Sube tu archivo CSV para registrar o actualizar productos en lote."
+        className="mb-6"
+      />
 
       <div className="bg-card border border-border rounded-lg p-6">
         <BulkUploadForm />

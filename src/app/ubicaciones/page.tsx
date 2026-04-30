@@ -1,7 +1,8 @@
-import { fetchWarehouses } from '@/src/services/warehouseService';
+import { fetchAllWarehouses } from '@/src/services/warehouseService';
 import { fetchLocations } from '@/src/services/locationService';
 import { fetchOwners } from '@/src/services/ownerService';
 import { UbicacionesClient } from './_components/UbicacionesClient';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -23,10 +24,7 @@ export default async function UbicacionesPage({ searchParams }: PageProps) {
   const parentLocationId = rackId ?? aisleId ?? undefined;
 
   const owners = await fetchOwners().catch(() => []);
-  const warehousesByOwner = await Promise.all(
-    owners.map(o => fetchWarehouses(o.ownerId).catch(() => []))
-  );
-  const warehouses = warehousesByOwner.flat();
+  const warehouses = await fetchAllWarehouses(owners.map((o) => o.ownerId));
 
   const locations = warehouseId
     ? await fetchLocations(warehouseId, parentLocationId).catch(() => [])
@@ -34,17 +32,11 @@ export default async function UbicacionesPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6 md:p-8">
-      <header className="mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-          Inventario
-        </p>
-        <h1 className="text-3xl font-black text-foreground uppercase leading-none tracking-tight">
-          Ubicaciones
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-        Explora y administra tus bodegas por niveles — Pasillo → Rack → Bin.
-        </p>
-      </header>
+      <PageHeader
+        section="Inventario"
+        title="Ubicaciones"
+        description="Explora y administra tus bodegas por niveles — Pasillo → Rack → Bin."
+      />
       <UbicacionesClient
         warehouses={warehouses}
         locations={locations}
