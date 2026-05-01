@@ -51,8 +51,12 @@ export function ContainerDetailClient({
     startActionTransition(async () => {
       dispatchOptimistic(temp);
       const result = await createContainerLine(container.containerId, data);
-      if ('error' in result) toast.error(result.error);
-      else toast.success('Línea agregada');
+      if ('error' in result) {
+        toast.error(result.error);
+      } else {
+        const product = products.find((p) => p.productId === data.productId);
+        toast.success(`${product?.name ?? 'Producto'} × ${data.qtyTotal} agregado`);
+      }
     });
   }
 

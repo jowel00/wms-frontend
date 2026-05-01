@@ -129,8 +129,18 @@ function LocationsClientInner({
     startActionTransition(async () => {
       if (belongsHere) dispatchOptimistic(temp);
       const result = await createLocation(data);
-      if ('error' in result) toast.error(result.error);
-      else toast.success('Ubicación creada');
+      if ('error' in result) {
+        toast.error(result.error);
+      } else {
+        const loc = result.data;
+        if (loc) {
+          const TYPE_LABEL: Record<string, string> = { PASILLO: 'Pasillo', RACK: 'Rack', BIN: 'Bin' };
+          const parts = [aisleCode, rackCode, loc.code].filter(Boolean).join(' › ');
+          toast.success(`${TYPE_LABEL[loc.type] ?? loc.type} creado — ${parts}`);
+        } else {
+          toast.success('Ubicación creada');
+        }
+      }
     });
   }
 

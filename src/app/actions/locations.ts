@@ -6,17 +6,17 @@ import { postLocation, deactivateLocation, fetchLocations, fetchLocationTypes } 
 import type { Location, LocationTypeItem } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
-export async function createLocation(data: unknown): Promise<ActionResult> {
+export async function createLocation(data: unknown): Promise<ActionResult<Location>> {
   const parsed = locationSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await postLocation({
+    const location = await postLocation({
       warehouseId: parsed.data.warehouseId,
       typeId: parsed.data.typeId,
       parentLocationId: parsed.data.parentLocationId,
     });
     revalidatePath('/locations');
-    return { success: true };
+    return { success: true, data: location };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear ubicación' };
   }

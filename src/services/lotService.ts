@@ -1,10 +1,17 @@
 import type { Lot } from '@/src/types/inventory';
 import { apiUrl } from '@/src/services/api';
 
+async function throwIfError(res: Response): Promise<void> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `HTTP ${res.status}`);
+  }
+}
+
 // GET /api/v1/lots — devuelve todos los lotes (filtrar por ownerId en cliente)
 export async function fetchLots(): Promise<Lot[]> {
   const res = await fetch(`${apiUrl()}/lots`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`fetchLots: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -21,6 +28,6 @@ export async function postLot(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`postLot: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }

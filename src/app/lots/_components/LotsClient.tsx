@@ -66,8 +66,12 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
     startActionTransition(async () => {
       dispatchOptimistic(temp);
       const result = await createLot(data);
-      if ('error' in result) toast.error(result.error);
-      else toast.success('Lote creado');
+      if ('error' in result) {
+        toast.error(result.error);
+      } else {
+        const product = products.find((p) => p.productId === data.productId);
+        toast.success(`Lote ${data.batchCode} creado — ${product?.name ?? 'Producto'}`);
+      }
     });
   }
 

@@ -98,7 +98,7 @@ function ContainersClientInner({
       dispatchOptimistic(temp);
       const result = await createContainer(data);
       if ('error' in result) toast.error(result.error);
-      else toast.success('Contenedor creado');
+      else toast.success(`Contenedor ${(result.data?.type ?? data.type).toUpperCase()} creado`);
     });
   }
 

@@ -1,9 +1,16 @@
 import type { Owner } from '@/src/types/inventory';
 import { apiUrl } from '@/src/services/api';
 
+async function throwIfError(res: Response): Promise<void> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `HTTP ${res.status}`);
+  }
+}
+
 export async function fetchOwners(): Promise<Owner[]> {
   const res = await fetch(`${apiUrl()}/owners`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`fetchOwners: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -13,7 +20,7 @@ export async function postOwner(data: { name: string }): Promise<Owner> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`postOwner: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -23,7 +30,7 @@ export async function patchOwner(id: string, data: { name: string }): Promise<Ow
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`patchOwner: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -36,6 +43,6 @@ export async function patchOwnerStatus(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error(`patchOwnerStatus: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }

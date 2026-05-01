@@ -3,27 +3,28 @@
 import { revalidatePath } from 'next/cache';
 import { ownerSchema } from '@/src/lib/validations/owners';
 import { postOwner, patchOwner, patchOwnerStatus } from '@/src/services/ownerService';
+import type { Owner } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
-export async function createOwner(data: unknown): Promise<ActionResult> {
+export async function createOwner(data: unknown): Promise<ActionResult<Owner>> {
   const parsed = ownerSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await postOwner(parsed.data);
+    const owner = await postOwner(parsed.data);
     revalidatePath('/owners');
-    return { success: true };
+    return { success: true, data: owner };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear owner' };
   }
 }
 
-export async function updateOwner(id: string, data: unknown): Promise<ActionResult> {
+export async function updateOwner(id: string, data: unknown): Promise<ActionResult<Owner>> {
   const parsed = ownerSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await patchOwner(id, parsed.data);
+    const owner = await patchOwner(id, parsed.data);
     revalidatePath('/owners');
-    return { success: true };
+    return { success: true, data: owner };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al actualizar owner' };
   }

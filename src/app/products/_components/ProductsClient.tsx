@@ -116,7 +116,7 @@ export function ProductsClient({
       dispatchOptimistic(temp);
       const result = await createProductAction(data);
       if ('error' in result) toast.error(result.error);
-      else toast.success('Producto creado');
+      else toast.success(`"${result.data?.name ?? data.name}" creado (${result.data?.sellerSku ?? data.sellerSku})`);
     });
   }
 

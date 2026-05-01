@@ -2,32 +2,29 @@
 
 import { revalidatePath } from 'next/cache';
 import { warehouseSchema } from '@/src/lib/validations/warehouses';
-import {
-  postWarehouse,
-  patchWarehouse,
-  patchWarehouseStatus,
-} from '@/src/services/warehouseService';
+import { postWarehouse, patchWarehouse, patchWarehouseStatus } from '@/src/services/warehouseService';
+import type { Warehouse } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
-export async function createWarehouse(data: unknown): Promise<ActionResult> {
+export async function createWarehouse(data: unknown): Promise<ActionResult<Warehouse>> {
   const parsed = warehouseSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await postWarehouse(parsed.data);
+    const warehouse = await postWarehouse(parsed.data);
     revalidatePath('/warehouses');
-    return { success: true };
+    return { success: true, data: warehouse };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear bodega' };
   }
 }
 
-export async function updateWarehouse(id: string, data: unknown): Promise<ActionResult> {
+export async function updateWarehouse(id: string, data: unknown): Promise<ActionResult<Warehouse>> {
   const parsed = warehouseSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await patchWarehouse(id, parsed.data);
+    const warehouse = await patchWarehouse(id, parsed.data);
     revalidatePath('/warehouses');
-    return { success: true };
+    return { success: true, data: warehouse };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al actualizar bodega' };
   }

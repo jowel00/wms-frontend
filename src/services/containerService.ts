@@ -1,12 +1,19 @@
 import type { InventoryContainer } from '@/src/types/inventory';
 import { apiUrl } from '@/src/services/api';
 
+async function throwIfError(res: Response): Promise<void> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `HTTP ${res.status}`);
+  }
+}
+
 // GET /api/v1/inventory-containers?warehouseId=UUID
 export async function fetchContainers(warehouseId: string): Promise<InventoryContainer[]> {
   const res = await fetch(`${apiUrl()}/inventory-containers?warehouseId=${warehouseId}`, {
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`fetchContainers: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -22,7 +29,7 @@ export async function postContainer(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`postContainer: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -31,7 +38,7 @@ export async function fetchContainerById(containerId: string): Promise<Inventory
   const res = await fetch(`${apiUrl()}/inventory-containers/${containerId}`, {
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`fetchContainerById: HTTP ${res.status}`);
+  await throwIfError(res);
   return res.json();
 }
 
@@ -40,5 +47,5 @@ export async function closeContainer(id: string): Promise<void> {
   const res = await fetch(`${apiUrl()}/inventory-containers/${id}/close`, {
     method: 'PATCH',
   });
-  if (!res.ok) throw new Error(`closeContainer: HTTP ${res.status}`);
+  await throwIfError(res);
 }

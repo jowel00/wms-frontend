@@ -5,23 +5,23 @@ import { containerLineSchema } from '@/src/lib/validations/containerLines';
 import { postContainerLine } from '@/src/services/containerLineService';
 import { fetchProducts } from '@/src/services/productService';
 import { fetchLots } from '@/src/services/lotService';
-import type { ProductListItem, Lot } from '@/src/types/inventory';
+import type { ContainerLine, ProductListItem, Lot } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
 export async function createContainerLine(
   containerId: string,
   data: unknown
-): Promise<ActionResult> {
+): Promise<ActionResult<ContainerLine>> {
   const parsed = containerLineSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
-    await postContainerLine(containerId, {
+    const line = await postContainerLine(containerId, {
       productId: parsed.data.productId,
       lotId: parsed.data.lotId,
       qtyTotal: parsed.data.qtyTotal,
     });
     revalidatePath(`/containers/${containerId}`);
-    return { success: true };
+    return { success: true, data: line };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al agregar línea' };
   }

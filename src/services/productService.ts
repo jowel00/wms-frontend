@@ -1,4 +1,4 @@
-import type { BulkUploadResponse, ProductListItem } from '@/src/types/inventory';
+import type { BulkUploadResponse, Product, ProductListItem } from '@/src/types/inventory';
 import { apiUrl } from '@/src/services/api';
 
 // ─── Listado paginado de productos ───────────────────────────────────────────
@@ -48,7 +48,10 @@ export async function fetchProducts(
     cache: 'no-store',
   });
 
-  if (!res.ok) throw new Error(`Error al cargar productos: HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `HTTP ${res.status}`);
+  }
 
   const body = (await res.json()) as SpringPage<ProductListItem>;
 
@@ -71,7 +74,7 @@ export interface CreateProductPayload {
   hasExpiration: boolean;
 }
 
-export async function createProduct(payload: CreateProductPayload): Promise<void> {
+export async function createProduct(payload: CreateProductPayload): Promise<Product> {
   const body: Record<string, unknown> = {
     ownerId: payload.ownerId,
     sellerSku: payload.sellerSku,
@@ -93,6 +96,7 @@ export async function createProduct(payload: CreateProductPayload): Promise<void
       detail?.message ?? `Error al crear producto: HTTP ${res.status}`
     );
   }
+  return res.json();
 }
 
 // Shape del error de validación individual que devuelve el backend

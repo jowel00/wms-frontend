@@ -60,7 +60,7 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
         dispatchOptimistic({ type: 'update', owner: updated });
         const result = await updateOwner(editingOwner.ownerId, data);
         if ('error' in result) toast.error(result.error);
-        else toast.success('Owner actualizado');
+        else toast.success(`Owner "${result.data?.name ?? data.name}" actualizado`);
       });
     } else {
       const temp: Owner = {
@@ -72,7 +72,7 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
         dispatchOptimistic({ type: 'add', owner: temp });
         const result = await createOwner(data);
         if ('error' in result) toast.error(result.error);
-        else toast.success('Owner creado');
+        else toast.success(`Owner "${result.data?.name ?? data.name}" creado`);
       });
     }
   }

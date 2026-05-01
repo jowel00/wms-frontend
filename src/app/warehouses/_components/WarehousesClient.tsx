@@ -88,7 +88,7 @@ function WarehousesClientInner({
         dispatchOptimistic({ type: 'update', warehouse: updated });
         const result = await updateWarehouse(editingWarehouse.warehouseId, data);
         if ('error' in result) toast.error(result.error);
-        else toast.success('Bodega actualizada');
+        else toast.success(`Bodega "${result.data?.name ?? data.name}" actualizada`);
       });
     } else {
       const temp: Warehouse = {
@@ -100,7 +100,7 @@ function WarehousesClientInner({
         dispatchOptimistic({ type: 'add', warehouse: temp });
         const result = await createWarehouse(data);
         if ('error' in result) toast.error(result.error);
-        else toast.success('Bodega creada');
+        else toast.success(`Bodega "${result.data?.name ?? data.name}" creada en ${result.data?.city ?? data.city}`);
       });
     }
   }

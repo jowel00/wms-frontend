@@ -3,21 +3,22 @@
 import { revalidatePath } from 'next/cache';
 import { productSchema } from '@/src/lib/validations/products';
 import { createProduct } from '@/src/services/productService';
+import type { Product } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
-export async function createProductAction(data: unknown): Promise<ActionResult> {
+export async function createProductAction(data: unknown): Promise<ActionResult<Product>> {
   const parsed = productSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { barcodeUpcEan, ...rest } = parsed.data;
 
   try {
-    await createProduct({
+    const product = await createProduct({
       ...rest,
       barcodeUpcEan: barcodeUpcEan || undefined,
     });
     revalidatePath('/products');
-    return { success: true };
+    return { success: true, data: product };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Error al crear producto' };
   }
