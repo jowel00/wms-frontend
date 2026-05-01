@@ -4,9 +4,9 @@ import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { Layers, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ActionError } from '@/components/ui/action-error';
 import {
   Select,
   SelectContent,
@@ -38,7 +38,6 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
   const pathname = usePathname();
   const [, startActionTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const [optimisticLots, dispatchOptimistic] = useOptimistic(
     lots,
@@ -54,8 +53,6 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
   }
 
   function handleCreate(data: LotFormValues) {
-    setActionError(null);
-
     const temp: Lot = {
       lotId: `opt-${Date.now()}`,
       ownerId: data.ownerId,
@@ -69,7 +66,8 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
     startActionTransition(async () => {
       dispatchOptimistic(temp);
       const result = await createLot(data);
-      if ('error' in result) setActionError(result.error);
+      if ('error' in result) toast.error(result.error);
+      else toast.success('Lote creado');
     });
   }
 
@@ -111,8 +109,6 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
         />
       ) : (
         <>
-          <ActionError message={actionError} />
-
           <div className="flex items-center gap-3 mb-5">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               {selectedOwner?.name ?? 'Lotes'}
@@ -121,7 +117,7 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
               </span>
             </p>
             <Button
-              onClick={() => { setActionError(null); setDialogOpen(true); }}
+              onClick={() => setDialogOpen(true)}
               className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
               size="lg"
             >

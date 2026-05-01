@@ -3,10 +3,10 @@
 import { useState, useOptimistic, useTransition } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Package } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ContainerStatusBadge } from '@/components/ui/container-status-badge';
-import { ActionError } from '@/components/ui/action-error';
 import { ContainerLinesTable } from './ContainerLinesTable';
 import { AddLineDialog } from './AddLineDialog';
 import { createContainerLine } from '@/src/app/actions/containerLines';
@@ -31,7 +31,6 @@ export function ContainerDetailClient({
 }: ContainerDetailClientProps) {
   const [, startActionTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const [optimisticLines, dispatchOptimistic] = useOptimistic(
     lines,
@@ -39,8 +38,6 @@ export function ContainerDetailClient({
   );
 
   function handleCreate(data: ContainerLineFormValues) {
-    setActionError(null);
-
     const temp: ContainerLine = {
       containerLineId: `opt-${Date.now()}`,
       containerId: container.containerId,
@@ -54,7 +51,8 @@ export function ContainerDetailClient({
     startActionTransition(async () => {
       dispatchOptimistic(temp);
       const result = await createContainerLine(container.containerId, data);
-      if ('error' in result) setActionError(result.error);
+      if ('error' in result) toast.error(result.error);
+      else toast.success('Línea agregada');
     });
   }
 
@@ -104,7 +102,7 @@ export function ContainerDetailClient({
           </span>
         </p>
         <Button
-          onClick={() => { setActionError(null); setDialogOpen(true); }}
+          onClick={() => setDialogOpen(true)}
           className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
           size="lg"
           disabled={container.status === 'CLOSED'}
@@ -113,8 +111,6 @@ export function ContainerDetailClient({
           Agregar línea
         </Button>
       </div>
-
-      <ActionError message={actionError} />
 
       {optimisticLines.length === 0 ? (
         <EmptyState

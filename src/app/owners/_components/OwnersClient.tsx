@@ -3,10 +3,10 @@
 import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { Users, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ActionError } from '@/components/ui/action-error';
 import { useOwners } from '@/hooks/useOwners';
 import { createOwner, updateOwner } from '@/src/app/actions/owners';
 import { OwnersTable } from './OwnersTable';
@@ -42,29 +42,25 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
   const { search, setSearch, filtered: optimisticFiltered } = useOwners(optimisticOwners, initialSearch);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   function openCreate() {
     setEditingOwner(null);
-    setActionError(null);
     setDialogOpen(true);
   }
 
   function openEdit(owner: Owner) {
     setEditingOwner(owner);
-    setActionError(null);
     setDialogOpen(true);
   }
 
   function handleSubmit(data: OwnerFormValues) {
-    setActionError(null);
-
     if (editingOwner) {
       const updated: Owner = { ...editingOwner, name: data.name };
       startActionTransition(async () => {
         dispatchOptimistic({ type: 'update', owner: updated });
         const result = await updateOwner(editingOwner.ownerId, data);
-        if ('error' in result) setActionError(result.error);
+        if ('error' in result) toast.error(result.error);
+        else toast.success('Owner actualizado');
       });
     } else {
       const temp: Owner = {
@@ -75,15 +71,14 @@ function OwnersClientInner({ owners, initialSearch }: OwnersClientProps) {
       startActionTransition(async () => {
         dispatchOptimistic({ type: 'add', owner: temp });
         const result = await createOwner(data);
-        if ('error' in result) setActionError(result.error);
+        if ('error' in result) toast.error(result.error);
+        else toast.success('Owner creado');
       });
     }
   }
 
   return (
     <>
-      <ActionError message={actionError} />
-
       <div className="flex items-center gap-3 mb-5">
         <SearchInput
           placeholder="Buscar owner..."

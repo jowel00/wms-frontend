@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className="antialiased">
         <MainLayout>{children}</MainLayout>
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );

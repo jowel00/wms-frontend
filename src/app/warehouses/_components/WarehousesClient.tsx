@@ -4,10 +4,10 @@ import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Warehouse as WarehouseIcon, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ActionError } from '@/components/ui/action-error';
 import { OwnerSelect } from '@/components/ui/owner-select';
 import { useWarehouses } from '@/hooks/useWarehouses';
 import { createWarehouse, updateWarehouse } from '@/src/app/actions/warehouses';
@@ -59,7 +59,6 @@ function WarehousesClientInner({
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   function handleOwnerFilter(val: string) {
     setOwnerFilter(val);
@@ -74,25 +73,22 @@ function WarehousesClientInner({
 
   function openCreate() {
     setEditingWarehouse(null);
-    setActionError(null);
     setDialogOpen(true);
   }
 
   function openEdit(w: Warehouse) {
     setEditingWarehouse(w);
-    setActionError(null);
     setDialogOpen(true);
   }
 
   function handleSubmit(data: WarehouseFormValues) {
-    setActionError(null);
-
     if (editingWarehouse) {
       const updated: Warehouse = { ...editingWarehouse, ...data };
       startActionTransition(async () => {
         dispatchOptimistic({ type: 'update', warehouse: updated });
         const result = await updateWarehouse(editingWarehouse.warehouseId, data);
-        if ('error' in result) setActionError(result.error);
+        if ('error' in result) toast.error(result.error);
+        else toast.success('Bodega actualizada');
       });
     } else {
       const temp: Warehouse = {
@@ -103,15 +99,14 @@ function WarehousesClientInner({
       startActionTransition(async () => {
         dispatchOptimistic({ type: 'add', warehouse: temp });
         const result = await createWarehouse(data);
-        if ('error' in result) setActionError(result.error);
+        if ('error' in result) toast.error(result.error);
+        else toast.success('Bodega creada');
       });
     }
   }
 
   return (
     <>
-      <ActionError message={actionError} />
-
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         <SearchInput
           placeholder="Buscar bodega..."

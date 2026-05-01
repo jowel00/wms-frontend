@@ -5,8 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Package, Plus } from 'lucide-react';
 import { OwnerGate } from './OwnerGate';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { ActionError } from '@/components/ui/action-error';
 import { OwnerSelect } from '@/components/ui/owner-select';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -87,7 +87,6 @@ export function ProductsClient({
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const rangeStart = (currentPage - 1) * 10 + 1;
   const rangeEnd = Math.min(currentPage * 10, total);
@@ -104,8 +103,6 @@ export function ProductsClient({
   }
 
   function handleSubmit(data: ProductFormValues) {
-    setActionError(null);
-
     const temp: ProductListItem = {
       productId: `opt-${Date.now()}`,
       sellerSku: data.sellerSku,
@@ -118,7 +115,8 @@ export function ProductsClient({
     startActionTransition(async () => {
       dispatchOptimistic(temp);
       const result = await createProductAction(data);
-      if ('error' in result) setActionError(result.error);
+      if ('error' in result) toast.error(result.error);
+      else toast.success('Producto creado');
     });
   }
 
@@ -126,8 +124,6 @@ export function ProductsClient({
 
   return (
     <div className="space-y-4">
-      <ActionError message={actionError} />
-
       {/* Buscador debounced + filtro de owner + botón crear */}
       <div className="flex items-center gap-3 flex-wrap">
         <Suspense>
@@ -141,10 +137,7 @@ export function ProductsClient({
           />
         </Suspense>
         <Button
-          onClick={() => {
-            setActionError(null);
-            setDialogOpen(true);
-          }}
+          onClick={() => setDialogOpen(true)}
           className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
           size="lg"
         >
