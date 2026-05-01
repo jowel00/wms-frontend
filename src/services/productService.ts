@@ -1,4 +1,5 @@
 import type { BulkUploadResponse, ProductListItem } from '@/src/types/inventory';
+import { apiUrl } from '@/src/services/api';
 
 // ─── Listado paginado de productos ───────────────────────────────────────────
 
@@ -28,9 +29,6 @@ interface SpringPage<T> {
 export async function fetchProducts(
   params: FetchProductsParams = {},
 ): Promise<ProductsListResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-
   const { page = 1, limit = 10, q, ownerId } = params;
 
   // El backend requiere ownerId obligatoriamente — sin él retornamos vacío
@@ -46,7 +44,7 @@ export async function fetchProducts(
   });
   if (q) sp.set('q', q);
 
-  const res = await fetch(`${apiUrl}/products?${sp.toString()}`, {
+  const res = await fetch(`${apiUrl()}/products?${sp.toString()}`, {
     cache: 'no-store',
   });
 
@@ -74,9 +72,6 @@ export interface CreateProductPayload {
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<void> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-
   const body: Record<string, unknown> = {
     ownerId: payload.ownerId,
     sellerSku: payload.sellerSku,
@@ -86,7 +81,7 @@ export async function createProduct(payload: CreateProductPayload): Promise<void
   };
   if (payload.barcodeUpcEan) body.barcodeUpcEan = payload.barcodeUpcEan;
 
-  const res = await fetch(`${apiUrl}/products`, {
+  const res = await fetch(`${apiUrl()}/products`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -125,15 +120,12 @@ export class BulkUploadError extends Error {
 }
 
 export async function bulkUpload(file: File): Promise<BulkUploadResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-
   const formData = new FormData();
   // TODO: remover ownerId hardcodeado — solo para pruebas
   formData.append('ownerId', '66121a09-0334-4dca-a510-7f818730443a');
   formData.append('file', file);
 
-  const response = await fetch(`${apiUrl}/products/bulk-upload`, {
+  const response = await fetch(`${apiUrl()}/products/bulk-upload`, {
     method: 'POST',
     body: formData,
   });

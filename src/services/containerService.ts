@@ -1,10 +1,5 @@
 import type { InventoryContainer } from '@/src/types/inventory';
-
-function apiUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-  return base;
-}
+import { apiUrl } from '@/src/services/api';
 
 // GET /api/v1/inventory-containers?warehouseId=UUID
 export async function fetchContainers(warehouseId: string): Promise<InventoryContainer[]> {

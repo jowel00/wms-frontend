@@ -1,10 +1,5 @@
 import type { ContainerLine } from '@/src/types/inventory';
-
-function apiUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-  return base;
-}
+import { apiUrl } from '@/src/services/api';
 
 // GET /api/v1/inventory-containers/{containerId}/lines
 export async function fetchContainerLines(containerId: string): Promise<ContainerLine[]> {

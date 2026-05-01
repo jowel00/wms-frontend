@@ -1,10 +1,5 @@
 import type { Location, LocationTypeItem } from '@/src/types/inventory';
-
-function apiUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-  return base;
-}
+import { apiUrl } from '@/src/services/api';
 
 // El backend sólo filtra por warehouseId: GET /api/v1/locations?warehouseId=UUID
 // El filtrado por parentLocationId se hace en el cliente.

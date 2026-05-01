@@ -1,10 +1,5 @@
 import type { Owner } from '@/src/types/inventory';
-
-function apiUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-  return base;
-}
+import { apiUrl } from '@/src/services/api';
 
 export async function fetchOwners(): Promise<Owner[]> {
   const res = await fetch(`${apiUrl()}/owners`, { cache: 'no-store' });

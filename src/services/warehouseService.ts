@@ -1,10 +1,5 @@
 import type { Warehouse } from '@/src/types/inventory';
-
-function apiUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) throw new Error('NEXT_PUBLIC_API_URL no está configurada.');
-  return base;
-}
+import { apiUrl } from '@/src/services/api';
 
 // El backend requiere ownerId: GET /api/v1/warehouses?ownerId=UUID
 export async function fetchWarehouses(ownerId: string): Promise<Warehouse[]> {
