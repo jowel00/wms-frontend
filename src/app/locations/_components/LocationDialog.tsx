@@ -10,17 +10,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { queryLocations, queryLocationTypes } from '@/src/app/actions/locations';
-import type { Location, LocationTypeItem } from '@/src/types/inventory';
+import { Badge } from '@/components/ui/badge';
+import { queryLocationTypes } from '@/src/app/actions/locations';
 import type { LocationFormValues } from '@/src/lib/validations/locations';
 
 const TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -34,6 +27,11 @@ interface LocationDialogProps {
   onOpenChange: (open: boolean) => void;
   warehouseId: string;
   onSubmit: (data: LocationFormValues) => void;
+  lockedTypeName: string;
+  lockedAisleId?: string;
+  lockedAisleCode?: string;
+  lockedRackId?: string;
+  lockedRackCode?: string;
 }
 
 export function LocationDialog({
@@ -41,199 +39,107 @@ export function LocationDialog({
   onOpenChange,
   warehouseId,
   onSubmit,
+  lockedTypeName,
+  lockedAisleId,
+  lockedAisleCode,
+  lockedRackId,
+  lockedRackCode,
 }: LocationDialogProps) {
-  const [locationTypes, setLocationTypes] = useState<LocationTypeItem[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState('');
   const [loadingTypes, setLoadingTypes] = useState(false);
 
-  const [selectedTypeId, setSelectedTypeId] = useState('');
-  const [selectedAisleId, setSelectedAisleId] = useState('');
-  const [selectedRackId, setSelectedRackId] = useState('');
-
-  const [pasillos, setPasillos] = useState<Location[]>([]);
-  const [racks, setRacks] = useState<Location[]>([]);
-  const [loadingPasillos, setLoadingPasillos] = useState(false);
-  const [loadingRacks, setLoadingRacks] = useState(false);
-
-  const selectedType = locationTypes.find((t) => t.typeId === selectedTypeId);
-  const typeName = selectedType?.name ?? '';
-
-  // Cargar tipos de ubicación y resetear estado al abrir
+  // Fetch de tipos solo para obtener el typeId que requiere el backend
   useEffect(() => {
     if (!open) return;
     setSelectedTypeId('');
-    setSelectedAisleId('');
-    setSelectedRackId('');
-    setPasillos([]);
-    setRacks([]);
     setLoadingTypes(true);
     queryLocationTypes()
-      .then(setLocationTypes)
+      .then((types) => {
+        const match = types.find((t) => t.name === lockedTypeName);
+        if (match) setSelectedTypeId(match.typeId);
+      })
       .finally(() => setLoadingTypes(false));
-  }, [open]);
+  }, [open, lockedTypeName]);
 
-  // Cargar pasillos cuando el tipo requiere seleccionar uno
-  useEffect(() => {
-    if (!open || (typeName !== 'RACK' && typeName !== 'BIN')) return;
-    setSelectedAisleId('');
-    setSelectedRackId('');
-    setRacks([]);
-    setLoadingPasillos(true);
-    queryLocations(warehouseId, undefined) // undefined = pasillos (top-level)
-      .then(setPasillos)
-      .finally(() => setLoadingPasillos(false));
-  }, [typeName, open, warehouseId]);
-
-  // Cargar racks cuando se selecciona un pasillo y el tipo es BIN
-  useEffect(() => {
-    if (!open || typeName !== 'BIN' || !selectedAisleId) return;
-    setSelectedRackId('');
-    setLoadingRacks(true);
-    queryLocations(warehouseId, selectedAisleId)
-      .then(setRacks)
-      .finally(() => setLoadingRacks(false));
-  }, [selectedAisleId, typeName, open, warehouseId]);
-
-  const isReady =
-    !!selectedTypeId && (
-      typeName === 'PASILLO' ||
-      (typeName === 'RACK' && !!selectedAisleId) ||
-      (typeName === 'BIN' && !!selectedRackId) ||
-      // Para tipos no contemplados en la jerarquía, solo se requiere el tipo
-      (typeName !== 'PASILLO' && typeName !== 'RACK' && typeName !== 'BIN')
-    );
+  const parentLocationId =
+    lockedTypeName === 'PASILLO' ? null
+    : lockedTypeName === 'RACK' ? (lockedAisleId ?? null)
+    : lockedTypeName === 'BIN' ? (lockedRackId ?? null)
+    : null;
 
   function handleSubmit() {
-    if (!selectedTypeId || !isReady) return;
-
-    const parentLocationId =
-      typeName === 'PASILLO' ? null
-      : typeName === 'RACK' ? selectedAisleId
-      : typeName === 'BIN' ? selectedRackId
-      : null;
-
-    onSubmit({ warehouseId, typeId: selectedTypeId, typeName, parentLocationId });
+    if (!selectedTypeId) return;
+    onSubmit({ warehouseId, typeId: selectedTypeId, typeName: lockedTypeName, parentLocationId });
     onOpenChange(false);
   }
 
+  const typeLabel = lockedTypeName.charAt(0) + lockedTypeName.slice(1).toLowerCase();
+
+  const dialogDescription = (() => {
+    if (lockedTypeName === 'PASILLO') return 'Crearás un pasillo en esta bodega. El código se generará automáticamente.';
+    if (lockedTypeName === 'RACK' && lockedAisleCode) return `Crearás un rack en el pasillo ${lockedAisleCode}. El código se generará automáticamente.`;
+    if (lockedTypeName === 'BIN' && lockedRackCode) return `Crearás un bin en el rack ${lockedRackCode}. El código se generará automáticamente.`;
+    return 'El código se generará automáticamente.';
+  })();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold uppercase tracking-tight">
-            Nueva Ubicación
+            Nuevo {typeLabel}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            El código se generará automáticamente. Elige el tipo y completa la jerarquía requerida.
+            {dialogDescription}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          {/* Tipo — campo maestro */}
+        <div className="space-y-5 py-2 overflow-y-auto flex-1 min-h-0">
+          {/* Tipo — siempre bloqueado por contexto */}
           <div className="space-y-2">
             <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Tipo
             </Label>
-            {loadingTypes ? (
-              <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Cargando tipos...
-              </div>
-            ) : (
-              <Select value={selectedTypeId} onValueChange={setSelectedTypeId}>
-                <SelectTrigger className="h-14 text-base">
-                  <SelectValue placeholder="Selecciona el tipo de ubicación" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locationTypes.map((t) => (
-                    <SelectItem key={t.typeId} value={t.typeId} className="text-base py-3">
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <div className="h-14 flex items-center gap-3 px-4 rounded-md border bg-muted/40">
+              <span className="text-base font-bold">{typeLabel}</span>
+              <Badge variant="secondary" className="ml-auto text-xs font-normal">
+                contexto actual
+              </Badge>
+            </div>
           </div>
 
-          {/* Descripción del tipo seleccionado */}
-          {typeName && (
-            <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 leading-relaxed">
-              {TYPE_DESCRIPTIONS[typeName] ?? `Tipo de ubicación: ${typeName}`}
-            </p>
-          )}
+          {/* Descripción del tipo */}
+          <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 leading-relaxed">
+            {TYPE_DESCRIPTIONS[lockedTypeName] ?? `Tipo de ubicación: ${lockedTypeName}`}
+          </p>
 
-          {/* Pasillo — requerido para RACK y BIN */}
-          {(typeName === 'RACK' || typeName === 'BIN') && (
+          {/* Pasillo — bloqueado para RACK y BIN */}
+          {(lockedTypeName === 'RACK' || lockedTypeName === 'BIN') && (
             <div className="space-y-2">
               <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                {typeName === 'RACK' ? 'Pasillo donde irá el rack' : '1. Elige el pasillo'}
+                {lockedTypeName === 'RACK' ? 'Pasillo donde irá el rack' : 'Pasillo'}
               </Label>
-              {loadingPasillos ? (
-                <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Cargando pasillos...
-                </div>
-              ) : (
-                <Select
-                  value={selectedAisleId}
-                  onValueChange={setSelectedAisleId}
-                  disabled={pasillos.length === 0}
-                >
-                  <SelectTrigger className="h-14 text-base">
-                    <SelectValue
-                      placeholder={
-                        pasillos.length === 0
-                          ? 'No hay pasillos disponibles'
-                          : 'Selecciona un pasillo'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pasillos.map((p) => (
-                      <SelectItem key={p.locationId} value={p.locationId} className="text-base py-3">
-                        <span className="font-mono font-bold">{p.code}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <div className="h-14 flex items-center gap-3 px-4 rounded-md border bg-muted/40">
+                <span className="font-mono font-bold text-base">{lockedAisleCode}</span>
+                <Badge variant="secondary" className="ml-auto text-xs font-normal">
+                  contexto actual
+                </Badge>
+              </div>
             </div>
           )}
 
-          {/* Rack — requerido solo para BIN (aparece tras elegir pasillo) */}
-          {typeName === 'BIN' && selectedAisleId && (
+          {/* Rack — bloqueado solo para BIN */}
+          {lockedTypeName === 'BIN' && (
             <div className="space-y-2">
               <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                2. Elige el rack
+                Rack
               </Label>
-              {loadingRacks ? (
-                <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Cargando racks...
-                </div>
-              ) : (
-                <Select
-                  value={selectedRackId}
-                  onValueChange={setSelectedRackId}
-                  disabled={racks.length === 0}
-                >
-                  <SelectTrigger className="h-14 text-base">
-                    <SelectValue
-                      placeholder={
-                        racks.length === 0
-                          ? 'No hay racks en este pasillo'
-                          : 'Selecciona un rack'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {racks.map((r) => (
-                      <SelectItem key={r.locationId} value={r.locationId} className="text-base py-3">
-                        <span className="font-mono font-bold">{r.code}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <div className="h-14 flex items-center gap-3 px-4 rounded-md border bg-muted/40">
+                <span className="font-mono font-bold text-base">{lockedRackCode}</span>
+                <Badge variant="secondary" className="ml-auto text-xs font-normal">
+                  contexto actual
+                </Badge>
+              </div>
             </div>
           )}
         </div>
@@ -250,10 +156,14 @@ export function LocationDialog({
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!isReady}
-            className="h-12 px-8 text-base font-bold uppercase tracking-wider"
+            disabled={!selectedTypeId}
+            className="h-12 px-8 text-base font-bold uppercase tracking-wider gap-2"
           >
-            {typeName ? `Crear ${typeName.charAt(0) + typeName.slice(1).toLowerCase()}` : 'Crear ubicación'}
+            {loadingTypes ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Preparando...</>
+            ) : (
+              `Crear ${typeLabel}`
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

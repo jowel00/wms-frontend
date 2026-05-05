@@ -108,14 +108,7 @@ function LocationsClientInner({
   }
 
   function handleCreate(data: LocationFormValues) {
-    // Sólo mostrar optimistic si la nueva ubicación pertenece al nivel actual
-    const currentParentId = rackId ?? aisleId ?? null;
     const newParentId = data.parentLocationId ?? null;
-
-    const belongsHere =
-      (level === 'PASILLO' && data.typeName === 'PASILLO' && newParentId === null) ||
-      (level === 'RACK'    && data.typeName === 'RACK'    && newParentId === aisleId) ||
-      (level === 'BIN'     && data.typeName === 'BIN'     && newParentId === rackId);
 
     const temp: Location = {
       locationId: `opt-${Date.now()}`,
@@ -127,7 +120,7 @@ function LocationsClientInner({
     };
 
     startActionTransition(async () => {
-      if (belongsHere) dispatchOptimistic(temp);
+      dispatchOptimistic(temp);
       const result = await createLocation(data);
       if ('error' in result) {
         toast.error(result.error);
@@ -224,6 +217,11 @@ function LocationsClientInner({
             onOpenChange={setDialogOpen}
             warehouseId={warehouseId}
             onSubmit={handleCreate}
+            lockedTypeName={level === 'PASILLO' ? 'PASILLO' : level === 'RACK' ? 'RACK' : 'BIN'}
+            lockedAisleId={level === 'RACK' || level === 'BIN' ? aisleId : undefined}
+            lockedAisleCode={level === 'RACK' || level === 'BIN' ? aisleCode : undefined}
+            lockedRackId={level === 'BIN' ? rackId : undefined}
+            lockedRackCode={level === 'BIN' ? rackCode : undefined}
           />
         </>
       )}
