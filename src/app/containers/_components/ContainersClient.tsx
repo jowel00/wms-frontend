@@ -103,7 +103,13 @@ function ContainersClientInner({
   }
 
   const hasWarehouse = !!warehouseId;
+  const selectedOwner = owners.find((o) => o.ownerId === ownerId);
   const selectedWarehouse = warehouses.find((w) => w.warehouseId === warehouseId);
+
+  // Derivar jerarquía del bin filtrado para bloquear contexto en el dialog
+  const lockedBin = locationId ? locations.find((l) => l.locationId === locationId) : undefined;
+  const lockedRack = lockedBin ? locations.find((l) => l.locationId === lockedBin.parentLocationId) : undefined;
+  const lockedAisle = lockedRack ? locations.find((l) => l.locationId === lockedRack.parentLocationId) : undefined;
 
   return (
     <>
@@ -216,14 +222,20 @@ function ContainersClientInner({
                 ({visibleContainers.length})
               </span>
             </p>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
-              size="lg"
-            >
-              <Plus className="h-5 w-5" />
-              Nuevo contenedor
-            </Button>
+            {locationId ? (
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
+                size="lg"
+              >
+                <Plus className="h-5 w-5" />
+                Nuevo contenedor
+              </Button>
+            ) : (
+              <p className="ml-auto text-xs text-muted-foreground italic">
+                Selecciona un bin para crear contenedores
+              </p>
+            )}
           </div>
 
           {visibleContainers.length === 0 ? (
@@ -232,10 +244,10 @@ function ContainersClientInner({
               title={locationId ? 'Sin contenedores en este bin' : 'Sin contenedores'}
               description={
                 locationId
-                  ? 'Este bin no tiene contenedores. Cambia el filtro o crea uno nuevo.'
-                  : 'Esta bodega aún no tiene contenedores registrados. Crea el primero para comenzar.'
+                  ? 'Este bin no tiene contenedores. Crea el primero para comenzar.'
+                  : 'Esta bodega aún no tiene contenedores registrados. Filtra por un bin para crear el primero.'
               }
-              action={!locationId ? { label: '+ Crear el primero', onClick: () => setDialogOpen(true) } : undefined}
+              action={locationId ? { label: '+ Crear el primero', onClick: () => setDialogOpen(true) } : undefined}
             />
           ) : (
             <ContainersTable
@@ -247,15 +259,21 @@ function ContainersClientInner({
         </>
       )}
 
-      <ContainerDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        owners={owners}
-        warehouses={warehouses}
-        defaultOwnerId={ownerId}
-        defaultWarehouseId={warehouseId}
-        onSubmit={handleCreate}
-      />
+      {locationId && (
+        <ContainerDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSubmit={handleCreate}
+          lockedOwnerId={ownerId}
+          lockedOwnerName={selectedOwner?.name}
+          lockedWarehouseId={warehouseId}
+          lockedWarehouseName={selectedWarehouse?.name}
+          lockedAisleCode={lockedAisle?.code}
+          lockedRackCode={lockedRack?.code}
+          lockedBinId={locationId}
+          lockedBinCode={lockedBin?.code}
+        />
+      )}
     </>
   );
 }
