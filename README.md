@@ -146,6 +146,7 @@ wms-frontend/
 │   │       └── containerLines.ts         # createContainerLine + queryLineProducts + queryLineLots
 │   │
 │   ├── services/                          # Clientes HTTP hacia wms-core
+│   │   ├── api.ts                         # apiUrl() — centraliza NEXT_PUBLIC_API_URL
 │   │   ├── ownerService.ts
 │   │   ├── warehouseService.ts
 │   │   ├── locationService.ts             # fetchLocations + fetchAllLocations
@@ -155,8 +156,9 @@ wms-frontend/
 │   │   └── lotService.ts                 # fetchLots + postLot
 │   │
 │   ├── types/
-│   │   └── inventory.ts                   # Product, Owner, Warehouse, Location, LocationType,
-│   │                                      # InventoryContainer, ContainerLine, Lot, BulkUploadResponse
+│   │   ├── inventory.ts                   # Product, Owner, Warehouse, Location, LocationType,
+│   │   │                                  # InventoryContainer, ContainerLine, Lot, BulkUploadResponse
+│   │   └── actions.ts                     # ActionResult<T> — { success: true; data: T } | { error: string }
 │   │
 │   └── lib/
 │       ├── colombia-cities.ts
@@ -179,9 +181,8 @@ wms-frontend/
 │   └── ui/
 │       ├── shadcn (vía CLI)               # button, badge, dialog, form, input, label, select,
 │       │                                  # separator, skeleton, switch, table, tooltip,
-│       │                                  # command, popover
+│       │                                  # command, popover, sonner
 │       └── propios
-│           ├── action-error.tsx           # Bloque de error reutilizable para Server Actions
 │           ├── container-status-badge.tsx # CREATED / ACTIVE / CLOSED / QUARANTINE
 │           ├── data-table.tsx             # DataTable<T> genérico — filas fat-finger py-5
 │           ├── empty-state.tsx            # Estado vacío con ícono, título y acción opcional
@@ -263,7 +264,7 @@ page.tsx (Server Component — fetch de datos)
 
 ### 2. Server Actions
 
-Los formularios invocan **Server Actions** en `src/app/actions/` que re-validan con Zod, llaman al servicio HTTP y ejecutan `revalidatePath()`. Siempre retornan `{ success: true } | { error: string }`.
+Los formularios invocan **Server Actions** en `src/app/actions/` que re-validan con Zod, llaman al servicio HTTP y ejecutan `revalidatePath()`. Retornan `ActionResult<T>` (definido en `src/types/actions.ts`): `{ success: true; data: T }` con la entidad creada/editada, o `{ error: string }` con el mensaje real que devuelve el backend.
 
 ### 3. Optimistic Updates (React 19)
 
@@ -288,6 +289,10 @@ Los dialogs se cargan con `dynamic()` solo cuando el usuario los abre por primer
 ### 8. Streaming con Suspense
 
 Cada ruta tiene `loading.tsx` con skeletons que replican la estructura visual. El usuario ve el layout completo mientras el Server Component resuelve los datos.
+
+### 9. Toast notifications con Sonner
+
+`<Toaster />` (de `components/ui/sonner.tsx`) está montado en `src/app/layout.tsx`. Los Clients llaman a `toast.success(...)` / `toast.error(...)` usando el campo `data` que retorna la Server Action para mostrar el nombre o código real de la entidad afectada (ej: `"Bin creado — PA-001 › RK-001 › BIN-001"`). Los servicios HTTP propagan el campo `message` del body de error para que el toast muestre el motivo real del backend en lugar de un genérico "HTTP 400".
 
 ---
 
