@@ -11,10 +11,18 @@ import { CONTAINER_TYPE_LABELS } from '@/src/types/inventory';
 interface ContainersTableProps {
   containers: InventoryContainer[];
   locations: Location[];
-  showLocationColumn?: boolean;
+  onPutaway?: (container: InventoryContainer) => void;
+  onMove?: (container: InventoryContainer) => void;
+  hideLocation?: boolean;
 }
 
-export function ContainersTable({ containers, locations, showLocationColumn = true }: ContainersTableProps) {
+export function ContainersTable({
+  containers,
+  locations,
+  onPutaway,
+  onMove,
+  hideLocation = false,
+}: ContainersTableProps) {
   const locationMap = new Map(locations.map((l) => [l.locationId, l.code]));
 
   const baseColumns: Column<InventoryContainer>[] = [
@@ -41,16 +49,19 @@ export function ContainersTable({ containers, locations, showLocationColumn = tr
   const locationColumn: Column<InventoryContainer> = {
     key: 'locationId',
     header: 'Ubicación',
-    cell: (c) => (
-      <span className="font-mono font-bold text-base tracking-wider">
-        {locationMap.get(c.locationId) ?? c.locationId.slice(0, 8)}
-      </span>
-    ),
+    cell: (c) =>
+      c.locationId ? (
+        <span className="font-mono font-bold text-base tracking-wider">
+          {locationMap.get(c.locationId) ?? c.locationId.slice(0, 8)}
+        </span>
+      ) : (
+        <span className="text-muted-foreground text-sm italic">Sin ubicar</span>
+      ),
   };
 
   const columns: Column<InventoryContainer>[] = [
     ...baseColumns,
-    ...(showLocationColumn ? [locationColumn] : []),
+    ...(hideLocation ? [] : [locationColumn]),
     {
       key: 'status',
       header: 'Estado',
@@ -59,12 +70,40 @@ export function ContainersTable({ containers, locations, showLocationColumn = tr
     {
       key: 'actions',
       header: '',
-      cell: (c) =>
-        c.containerId.startsWith('opt-') ? null : (
-          <Button asChild variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-wider">
-            <Link href={`/containers/${c.containerId}`}>Ver líneas →</Link>
-          </Button>
-        ),
+      cell: (c) => {
+        if (c.containerId.startsWith('opt-')) return null;
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            {/* PUTAWAY — solo en estado CREATED */}
+            {c.status === 'CREATED' && onPutaway && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPutaway(c)}
+                className="text-xs font-bold uppercase tracking-wider h-9 px-3"
+              >
+                Ubicar
+              </Button>
+            )}
+            {/* MOVE — disponible en ACTIVE */}
+            {c.status === 'ACTIVE' && onMove && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onMove(c)}
+                className="text-xs font-bold uppercase tracking-wider h-9 px-3"
+              >
+                Mover
+              </Button>
+            )}
+            <Button asChild variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-wider">
+              <Link href={`/containers/${c.containerId}?ownerId=${c.ownerId}&warehouseId=${c.warehouseId}&type=${encodeURIComponent(c.type)}`}>
+                Ver líneas →
+              </Link>
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
