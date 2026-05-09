@@ -9,19 +9,20 @@ interface PageProps {
   searchParams: Promise<{
     ownerId?: string;
     warehouseId?: string;
+    status?: string;
     locationId?: string;
   }>;
 }
 
 export default async function ContainersPage({ searchParams }: PageProps) {
-  const { ownerId, warehouseId, locationId } = await searchParams;
+  const { ownerId, warehouseId, status, locationId } = await searchParams;
 
   const owners = await fetchOwners().catch(() => []);
   const warehouses = await fetchAllWarehouses(owners.map((o) => o.ownerId));
 
   const [locations, containers] = await Promise.all([
     warehouseId ? fetchAllLocations(warehouseId).catch(() => []) : Promise.resolve([]),
-    warehouseId ? fetchContainers(warehouseId).catch(() => []) : Promise.resolve([]),
+    warehouseId ? fetchContainers({ warehouseId, status, locationId }).catch(() => []) : Promise.resolve([]),
   ]);
 
   return (
@@ -38,6 +39,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         containers={containers}
         ownerId={ownerId ?? ''}
         warehouseId={warehouseId ?? ''}
+        status={status ?? ''}
         locationId={locationId ?? ''}
       />
     </div>
