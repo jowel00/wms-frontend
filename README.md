@@ -96,21 +96,22 @@ wms-frontend/
 │   │   │       └── DrilldownBreadcrumb.tsx
 │   │   │
 │   │   ├── containers/                    # Gestión de Contenedores de Inventario
-│   │   │   ├── page.tsx                   # Filtros: owner → bodega → bin (URL params)
+│   │   │   ├── page.tsx                   # Filtros: owner → bodega → status → bin (URL params)
 │   │   │   ├── loading.tsx
 │   │   │   ├── _components/
-│   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + optimistic
-│   │   │   │   ├── ContainersTable.tsx    # Columna ubicación condicional + link al detalle
-│   │   │   │   ├── ContainerDialog.tsx    # Carga árbol de locations en 1 sola llamada
+│   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + optimistic RECEIVE/PUTAWAY/MOVE
+│   │   │   │   ├── ContainersTable.tsx    # Botones Putaway/Move por status + link al detalle
+│   │   │   │   ├── ContainerDialog.tsx    # Flujo RECEIVE: tipo (API) + producto + cantidad
+│   │   │   │   ├── PutawayDialog.tsx      # Asigna bin a contenedor CREATED → ACTIVE
+│   │   │   │   ├── MoveDialog.tsx         # Mueve contenedor ACTIVE a otro bin
 │   │   │   │   └── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
 │   │   │   │
-│   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas
-│   │   │       ├── page.tsx               # Fetch: container + lines + products + lots
+│   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas (solo lectura)
+│   │   │       ├── page.tsx               # Fetch: container + lines + products; type/ownerId vía searchParams
 │   │   │       ├── loading.tsx
 │   │   │       └── _components/
-│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor + optimistic lines
-│   │   │           ├── ContainerLinesTable.tsx    # Tabla: producto, lote, qty
-│   │   │           └── AddLineDialog.tsx          # Producto → Lote (filtrado) → Cantidad
+│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor (ContainerDetail) + líneas
+│   │   │           └── ContainerLinesTable.tsx    # Tabla: producto, lote, qty
 │   │   │
 │   │   ├── lots/                          # Gestión de Lotes (Lots)
 │   │   │   ├── page.tsx                   # Carga todos los lotes, filtra por owner en servidor
@@ -141,9 +142,9 @@ wms-frontend/
 │   │       ├── warehouses.ts
 │   │       ├── locations.ts
 │   │       ├── products.ts
-│   │       ├── containers.ts              # createContainer + queryAllContainersLocations
-│   │       ├── lots.ts                    # createLot + queryLotProducts
-│   │       └── containerLines.ts         # createContainerLine + queryLineProducts + queryLineLots
+│   │       ├── containers.ts              # receiveContainerAction + putawayContainerAction + moveContainerAction
+│   │       │                              # queryContainerTypes + queryLineProducts
+│   │       └── lots.ts                    # createLot + queryLotProducts
 │   │
 │   ├── services/                          # Clientes HTTP hacia wms-core
 │   │   ├── api.ts                         # apiUrl() — centraliza NEXT_PUBLIC_API_URL
@@ -151,13 +152,16 @@ wms-frontend/
 │   │   ├── warehouseService.ts
 │   │   ├── locationService.ts             # fetchLocations + fetchAllLocations
 │   │   ├── productService.ts
-│   │   ├── containerService.ts            # fetchContainers + fetchContainerById + postContainer
-│   │   ├── containerLineService.ts        # fetchContainerLines + postContainerLine
+│   │   ├── containerService.ts            # fetchContainers + fetchContainerById (→ ContainerDetail)
+│   │   │                                  # receiveContainer + putawayContainer + moveContainer
+│   │   ├── containerTypeService.ts        # fetchContainerTypes — GET /container-types
+│   │   ├── containerLineService.ts        # fetchContainerLines — GET /inventory-containers/:id/lines
 │   │   └── lotService.ts                 # fetchLots + postLot
 │   │
 │   ├── types/
 │   │   ├── inventory.ts                   # Product, Owner, Warehouse, Location, LocationType,
-│   │   │                                  # InventoryContainer, ContainerLine, Lot, BulkUploadResponse
+│   │   │                                  # InventoryContainer, ContainerDetail, ContainerTypeItem,
+│   │   │                                  # ContainerLine, Lot, BulkUploadResponse
 │   │   └── actions.ts                     # ActionResult<T> — { success: true; data: T } | { error: string }
 │   │
 │   └── lib/
@@ -167,9 +171,8 @@ wms-frontend/
 │           ├── warehouses.ts
 │           ├── locations.ts
 │           ├── products.ts
-│           ├── containers.ts              # containerSchema
-│           ├── lots.ts                   # lotSchema — validación cross-field expiresAt > receivedAt
-│           └── containerLines.ts         # containerLineSchema — qtyTotal min 1
+│           ├── containers.ts              # receiveSchema + putawaySchema + moveSchema
+│           └── lots.ts                   # lotSchema — validación cross-field expiresAt > receivedAt
 │
 ├── components/
 │   ├── layout/
@@ -197,6 +200,7 @@ wms-frontend/
 └── hooks/
     ├── useOwners.ts
     ├── useWarehouses.ts
+    ├── useContainers.ts               # binOptions + visible — sin useMemo (React Compiler activo)
     ├── useDebounce.ts
     └── useTheme.ts
 ```
@@ -211,8 +215,8 @@ wms-frontend/
 | `/owners` | CRUD de owners |
 | `/warehouses` | CRUD de bodegas, filtrable por owner |
 | `/locations` | CRUD de ubicaciones — requiere `?warehouseId=` |
-| `/containers` | Contenedores — filtros: `?ownerId=` → `?warehouseId=` → `?locationId=` (bin) |
-| `/containers/[containerId]` | Detalle del contenedor — líneas de inventario (ContainerLines) |
+| `/containers` | Contenedores — filtros: `?ownerId=` → `?warehouseId=` → `?status=` → `?locationId=` (bin, solo cuando status=ACTIVE) |
+| `/containers/[containerId]` | Detalle del contenedor — líneas de inventario (solo lectura) |
 | `/lots` | Lotes de productos — filtrable por `?ownerId=` |
 | `/products` | Catálogo de productos paginado — requiere `?ownerId=` |
 | `/products/bulk-upload` | Carga masiva de catálogo vía CSV |
@@ -238,12 +242,13 @@ La URL base se configura en `.env.local` con `NEXT_PUBLIC_API_URL`.
 | Ubicaciones | `GET` | `/locations?warehouseId=` | Listar todas (incluye pasillos, racks y bins) |
 | Ubicaciones | `POST` | `/locations` | Crear |
 | Tipos de ubicación | `GET` | `/location-types` | Listar tipos disponibles |
-| Contenedores | `GET` | `/inventory-containers?warehouseId=` | Listar por bodega |
-| Contenedores | `GET` | `/inventory-containers?locationId=` | Listar por bin |
-| Contenedores | `GET` | `/inventory-containers/:id` | Obtener por ID |
-| Contenedores | `POST` | `/inventory-containers` | Crear |
-| Líneas | `GET` | `/inventory-containers/:id/lines` | Listar líneas del contenedor |
-| Líneas | `POST` | `/inventory-containers/:id/lines` | Agregar línea |
+| Tipos de contenedor | `GET` | `/container-types` | Listar tipos (BOX, TOTE, PALLET) |
+| Contenedores | `GET` | `/inventory/containers?warehouseId=\|status=\|locationId=` | Listar con filtro |
+| Contenedores | `GET` | `/inventory/containers/:id` | Obtener detalle (`ContainerDetail`) |
+| Inventario — Recibir | `POST` | `/inventory/receive` | Crea contenedor + línea, sin ubicación → CREATED |
+| Inventario — Putaway | `POST` | `/inventory/containers/:id/putaway` | Asigna bin al contenedor CREATED → ACTIVE |
+| Inventario — Mover | `POST` | `/inventory/containers/:id/move` | Mueve contenedor ACTIVE a otro bin |
+| Líneas | `GET` | `/inventory-containers/:id/lines` | Listar líneas del contenedor (solo lectura) |
 | Lotes | `GET` | `/lots` | Listar todos (filtro por owner en cliente) |
 | Lotes | `POST` | `/lots` | Crear lote |
 | Productos | `GET` | `/products?ownerId=&page=&limit=&q=` | Listar paginado |
@@ -276,11 +281,11 @@ Los filtros persisten en la URL vía `router.push()`. Cada cambio de selección 
 
 ### 5. Pre-carga única de árbol de locations
 
-El `ContainerDialog` carga **todas las locations de una bodega en una sola llamada** al abrir, luego filtra pasillos → racks → bins en cliente sin llamadas adicionales. Esto elimina los 3 spinners encadenados del patrón anterior.
+`ContainersClient` carga **todas las locations de una bodega en una sola llamada** al arrancar la página. `PutawayDialog` y `MoveDialog` reciben el array `locations[]` como prop y construyen las etiquetas jerárquicas (`PA-001 › RK-001 › BIN-001`) en cliente sin llamadas adicionales.
 
 ### 6. Columna de ubicación condicional
 
-La tabla de contenedores oculta la columna "Ubicación" cuando hay un bin específico seleccionado en el filtro (`showLocationColumn={!locationId}`), evitando información redundante.
+La tabla de contenedores oculta la columna "Ubicación" cuando hay un bin específico seleccionado en el filtro (`hideLocation={!!locationId}`), evitando información redundante. El selector de bin solo aparece cuando `status === 'ACTIVE'`.
 
 ### 7. Lazy loading de dialogs
 
@@ -290,7 +295,19 @@ Los dialogs se cargan con `dynamic()` solo cuando el usuario los abre por primer
 
 Cada ruta tiene `loading.tsx` con skeletons que replican la estructura visual. El usuario ve el layout completo mientras el Server Component resuelve los datos.
 
-### 9. Toast notifications con Sonner
+### 9. Ciclo de vida de contenedores — RECEIVE → PUTAWAY → MOVE
+
+Los contenedores siguen un flujo explícito de operaciones de inventario:
+
+```
+RECEIVE  →  Crea contenedor + primera línea sin ubicación  →  status: CREATED
+PUTAWAY  →  Asigna un bin (solo desde CREATED)             →  status: ACTIVE
+MOVE     →  Reubica el contenedor a otro bin (desde ACTIVE)
+```
+
+`ContainerDialog` ejecuta el RECEIVE. `PutawayDialog` y `MoveDialog` aparecen como acciones en la tabla según el status del contenedor.
+
+### 10. Toast notifications con Sonner
 
 `<Toaster />` (de `components/ui/sonner.tsx`) está montado en `src/app/layout.tsx`. Los Clients llaman a `toast.success(...)` / `toast.error(...)` usando el campo `data` que retorna la Server Action para mostrar el nombre o código real de la entidad afectada (ej: `"Bin creado — PA-001 › RK-001 › BIN-001"`). Los servicios HTTP propagan el campo `message` del body de error para que el toast muestre el motivo real del backend en lugar de un genérico "HTTP 400".
 
@@ -304,7 +321,9 @@ Cada ruta tiene `loading.tsx` con skeletons que replican la estructura visual. E
 | `Warehouse` | `warehouseId`, `ownerId`, `name`, `countryCode`, `city`, `status` |
 | `Location` | `locationId`, `warehouseId`, `parentLocationId`, `type`, `code`, `active` |
 | `LocationTypeItem` | `typeId`, `name`, `indicator`, `isActive` |
-| `InventoryContainer` | `containerId`, `ownerId`, `warehouseId`, `locationId`, `type`, `status` |
+| `ContainerTypeItem` | `typeId`, `name` — entidad dinámica de `/container-types` |
+| `InventoryContainer` | `containerId`, `ownerId`, `warehouseId`, `locationId` (`null` si CREATED), `type`, `status` |
+| `ContainerDetail` | `containerId`, `productId`, `quantityAvailable`, `location` (código string, `null` si CREATED), `status` — shape real de `GET /inventory/containers/:id` |
 | `ContainerLine` | `containerLineId`, `containerId`, `productId`, `lotId`, `qtyTotal`, `qtyAvailable`, `qtyReserved` |
 | `Lot` | `lotId`, `productId`, `ownerId`, `supplierId`, `batchCode`, `expiresAt`, `receivedAt` |
 | `Product` | `productId`, `ownerId`, `sellerSku`, `name`, `barcodeUpdEan?`, `requiresUnitTracking`, `hasExpiration`, `status`, `createdAt` |
@@ -312,9 +331,10 @@ Cada ruta tiene `loading.tsx` con skeletons que replican la estructura visual. E
 
 **Notas de tipos:**
 - `ContainerStatus`: `'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE'`
-- `ContainerType`: `'box' | 'tote' | 'pallet'` (el backend almacena en minúsculas)
+- `ContainerType`: `'BOX' | 'TOTE' | 'PALLET'` (el backend serializa en uppercase)
 - `LocationType`: `'PASILLO' | 'RACK' | 'BIN'`
 - `expiresAt` / `receivedAt` en `Lot`: formato `"YYYY-MM-DD"` (Java `LocalDate`)
+- `ContainerDetail` y `InventoryContainer` tienen shapes distintos — el endpoint de lista devuelve `InventoryContainer` (con `ownerId`, `warehouseId`, `type`); el endpoint de detalle devuelve `ContainerDetail` (con código de ubicación ya resuelto)
 
 ---
 
@@ -356,14 +376,14 @@ Los archivos bajo `src/` se importan con `@/src/`. No mover archivos de `src/` a
 | Owners | `/owners` | ✅ Implementado | CRUD completo + optimistic updates |
 | Bodegas | `/warehouses` | ✅ Implementado | CRUD completo + filtro por owner |
 | Ubicaciones | `/locations` | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
-| Contenedores | `/containers` | ✅ Implementado | Filtros owner → bodega → bin + optimistic |
-| Contenedores — Detalle (Líneas) | `/containers/[id]` | ✅ Implementado | Tabla de ContainerLines + agregar línea con lote opcional |
+| Contenedores | `/containers` | ✅ Implementado | Flujo RECEIVE/PUTAWAY/MOVE + filtros owner → bodega → status → bin (bin solo cuando ACTIVE) |
+| Contenedores — Detalle | `/containers/[id]` | ✅ Implementado | Solo lectura — tipo/ownerId vía searchParams; líneas sin agregar manualmente |
 | Lotes | `/lots` | ✅ Implementado | Crear lote + tabla con badge de vencimiento |
-| Productos — Catálogo | ✅ Implementado | Listado paginado + creación individual |
-| Productos — Carga masiva CSV | ✅ Implementado | Drag-and-drop + errores de validación por fila |
-| Login / Autenticación | 🔲 Pendiente | El ownerId se integrará con la sesión |
-| Movimientos de Stock | 🔲 Pendiente | — |
-| Reportes | 🔲 Pendiente | — |
+| Productos — Catálogo | `/products` | ✅ Implementado | Listado paginado + creación individual |
+| Productos — Carga masiva CSV | `/products/bulk-upload` | ✅ Implementado | Drag-and-drop + errores de validación por fila |
+| Login / Autenticación | — | 🔲 Pendiente | El ownerId se integrará con la sesión |
+| Movimientos de Stock | — | 🔲 Pendiente | — |
+| Reportes | — | 🔲 Pendiente | — |
 
 ### Bugs conocidos (pendientes en backend)
 
