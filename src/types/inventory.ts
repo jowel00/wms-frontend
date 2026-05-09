@@ -67,25 +67,40 @@ export interface Location {
   active: boolean;             // boolean directo del backend
 }
 
+// ─── ContainerTypeItem ────────────────────────────────────────────────────────
+// Refleja ContainerTypeResponse: GET /api/v1/container-types
+export interface ContainerTypeItem {
+  typeId: string;             // UUID
+  name: string;               // uppercase: "BOX" | "TOTE" | "PALLET"
+}
+
 // ─── InventoryContainer ───────────────────────────────────────────────────────
 // ContainerStatus refleja el enum ContainerStatus del backend
 export type ContainerStatus = 'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE';
-// El mapper guarda el tipo en lowercase; los valores válidos son box, tote, pallet
-export type ContainerType = 'box' | 'tote' | 'pallet';
+// El backend serializa el tipo en uppercase desde la migración al flujo RECEIVE/PUTAWAY/MOVE
+export type ContainerType = 'BOX' | 'TOTE' | 'PALLET';
 
-export const CONTAINER_TYPE_LABELS: Record<string, string> = {
-  box: 'Caja',
-  tote: 'Tote',
-  pallet: 'Pallet',
+export const CONTAINER_TYPE_LABELS: Record<ContainerType, string> = {
+  BOX: 'Caja', TOTE: 'Tote', PALLET: 'Pallet',
 };
 
-// Refleja InventoryContainerResponse — el backend NO incluye createdAt ni closedAt
+// Refleja InventoryContainerResponse — locationId es null hasta que se ejecute PUTAWAY
 export interface InventoryContainer {
   containerId: string;        // UUID
   ownerId: string;            // UUID
   warehouseId: string;        // UUID
-  locationId: string;         // UUID
-  type: string;               // lowercase: "box" | "tote" | "pallet"
+  locationId: string | null;  // null cuando status === CREATED (antes del PUTAWAY)
+  type: string;               // uppercase: "BOX" | "TOTE" | "PALLET"
+  status: ContainerStatus;
+}
+
+// Refleja ContainerDetailResponse — GET /api/v1/inventory/containers/{id}
+// Devuelve el código de ubicación como string, no el UUID
+export interface ContainerDetail {
+  containerId: string;
+  productId: string | null;
+  quantityAvailable: number | null;
+  location: string | null;   // código de ubicación, null si no tiene (CREATED)
   status: ContainerStatus;
 }
 
