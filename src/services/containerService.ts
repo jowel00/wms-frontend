@@ -1,30 +1,51 @@
-import type { InventoryContainer } from '@/src/types/inventory';
+import type { InventoryContainer, ContainerDetail } from '@/src/types/inventory';
 import { apiUrl } from '@/src/services/api';
 
 async function throwIfError(res: Response): Promise<void> {
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.message ?? `HTTP ${res.status}`);
+    // Si hay details[], usar el primer mensaje de campo específico en lugar del genérico
+    const detail = body?.details?.[0]?.message;
+    throw new Error(detail ?? body?.message ?? `HTTP ${res.status}`);
   }
 }
 
-// GET /api/v1/inventory-containers?warehouseId=UUID
-export async function fetchContainers(warehouseId: string): Promise<InventoryContainer[]> {
-  const res = await fetch(`${apiUrl()}/inventory-containers?warehouseId=${warehouseId}`, {
+// GET /api/v1/inventory/containers?ownerId=|warehouseId=|locationId=|status=
+export async function fetchContainers(
+  filter: { ownerId?: string; warehouseId?: string; locationId?: string; status?: string }
+): Promise<InventoryContainer[]> {
+  const params = new URLSearchParams();
+  if (filter.ownerId)     params.set('ownerId',     filter.ownerId);
+  if (filter.warehouseId) params.set('warehouseId', filter.warehouseId);
+  if (filter.locationId)  params.set('locationId',  filter.locationId);
+  if (filter.status)      params.set('status',      filter.status);
+
+  const res = await fetch(`${apiUrl()}/inventory/containers?${params}`, {
     cache: 'no-store',
   });
   await throwIfError(res);
   return res.json();
 }
 
-// POST /api/v1/inventory-containers
-export async function postContainer(data: {
+// GET /api/v1/inventory/containers/:containerId → ContainerDetailResponse
+export async function fetchContainerById(containerId: string): Promise<ContainerDetail> {
+  const res = await fetch(`${apiUrl()}/inventory/containers/${containerId}`, {
+    cache: 'no-store',
+  });
+  await throwIfError(res);
+  return res.json();
+}
+
+// POST /api/v1/inventory/receive
+// Crea el contenedor en estado CREATED + primera línea de producto en un solo call
+export async function receiveContainer(data: {
   ownerId: string;
   warehouseId: string;
-  locationId: string;
-  type: string;
-}): Promise<InventoryContainer> {
-  const res = await fetch(`${apiUrl()}/inventory-containers`, {
+  typeId: string;
+  productId: string;
+  quantity: number;
+}): Promise<{ containerId: string; status: 'CREATED' }> {
+  const res = await fetch(`${apiUrl()}/inventory/receive`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -33,19 +54,31 @@ export async function postContainer(data: {
   return res.json();
 }
 
-// GET /api/v1/inventory-containers/{containerId}
-export async function fetchContainerById(containerId: string): Promise<InventoryContainer> {
-  const res = await fetch(`${apiUrl()}/inventory-containers/${containerId}`, {
-    cache: 'no-store',
+// POST /api/v1/inventory/containers/:containerId/putaway
+// Asigna ubicación a un contenedor CREATED → lo transiciona a ACTIVE
+export async function putawayContainer(
+  containerId: string,
+  locationId: string
+): Promise<{ containerId: string; status: 'ACTIVE'; locationId: string }> {
+  const res = await fetch(`${apiUrl()}/inventory/containers/${containerId}/putaway`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ locationId }),
   });
   await throwIfError(res);
   return res.json();
 }
 
-// PATCH /api/v1/inventory-containers/{id}/close — cierra el contenedor
-export async function closeContainer(id: string): Promise<void> {
-  const res = await fetch(`${apiUrl()}/inventory-containers/${id}/close`, {
-    method: 'PATCH',
+// POST /api/v1/inventory/containers/:containerId/move
+// Mueve un contenedor activo a otra ubicación
+export async function moveContainer(
+  containerId: string,
+  toLocationId: string
+): Promise<void> {
+  const res = await fetch(`${apiUrl()}/inventory/containers/${containerId}/move`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ toLocationId }),
   });
   await throwIfError(res);
 }
