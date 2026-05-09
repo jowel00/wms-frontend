@@ -18,19 +18,3 @@ export async function fetchContainerLines(containerId: string): Promise<Containe
   return res.json();
 }
 
-// POST /api/v1/inventory-containers/{containerId}/lines
-export async function postContainerLine(
-  containerId: string,
-  data: { productId: string; lotId?: string; qtyTotal: number }
-): Promise<ContainerLine> {
-  const res = await fetch(
-    `${apiUrl()}/inventory-containers/${containerId}/lines`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    }
-  );
-  await throwIfError(res);
-  return res.json();
-}
