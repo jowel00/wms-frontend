@@ -1,21 +1,16 @@
 'use client';
 
-import { useState, useOptimistic, useTransition } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Package } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { ArrowLeft, Package } from 'lucide-react';
 import { ContainerStatusBadge } from '@/components/ui/container-status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ContainerLinesTable } from './ContainerLinesTable';
-import { AddLineDialog } from './AddLineDialog';
-import { createContainerLine } from '@/src/app/actions/containerLines';
-import type { InventoryContainer, ContainerLine, ProductListItem, Lot } from '@/src/types/inventory';
+import type { ContainerDetail, ContainerLine, ContainerType, ProductListItem, Lot } from '@/src/types/inventory';
 import { CONTAINER_TYPE_LABELS } from '@/src/types/inventory';
-import type { ContainerLineFormValues } from '@/src/lib/validations/containerLines';
 
 interface ContainerDetailClientProps {
-  container: InventoryContainer;
+  container: ContainerDetail;
+  containerType: string | null;
   lines: ContainerLine[];
   products: ProductListItem[];
   lots: Lot[];
@@ -24,42 +19,12 @@ interface ContainerDetailClientProps {
 
 export function ContainerDetailClient({
   container,
+  containerType,
   lines,
   products,
   lots,
   locationCode,
 }: ContainerDetailClientProps) {
-  const [, startActionTransition] = useTransition();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const [optimisticLines, dispatchOptimistic] = useOptimistic(
-    lines,
-    (state: ContainerLine[], newLine: ContainerLine) => [...state, newLine]
-  );
-
-  function handleCreate(data: ContainerLineFormValues) {
-    const temp: ContainerLine = {
-      containerLineId: `opt-${Date.now()}`,
-      containerId: container.containerId,
-      productId: data.productId,
-      lotId: data.lotId ?? null,
-      qtyTotal: data.qtyTotal,
-      qtyAvailable: data.qtyTotal,
-      qtyReserved: 0,
-    };
-
-    startActionTransition(async () => {
-      dispatchOptimistic(temp);
-      const result = await createContainerLine(container.containerId, data);
-      if ('error' in result) {
-        toast.error(result.error);
-      } else {
-        const product = products.find((p) => p.productId === data.productId);
-        toast.success(`${product?.name ?? 'Producto'} × ${data.qtyTotal} agregado`);
-      }
-    });
-  }
-
   return (
     <>
       {/* Breadcrumb */}
@@ -84,7 +49,7 @@ export function ContainerDetailClient({
         <div className="flex flex-col gap-1">
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo</span>
           <span className="font-semibold text-base">
-            {CONTAINER_TYPE_LABELS[container.type] ?? container.type.toUpperCase()}
+            {(containerType && CONTAINER_TYPE_LABELS[containerType as ContainerType]) ?? containerType ?? '—'}
           </span>
         </div>
         <div className="flex flex-col gap-1">
@@ -97,50 +62,29 @@ export function ContainerDetailClient({
         </div>
       </div>
 
-      {/* Líneas */}
+      {/* Líneas — solo lectura */}
       <div className="flex items-center gap-3 mb-5">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           Líneas
           <span className="ml-2 font-normal normal-case tracking-normal">
-            ({optimisticLines.length})
+            ({lines.length})
           </span>
         </p>
-        <Button
-          onClick={() => setDialogOpen(true)}
-          className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
-          size="lg"
-          disabled={container.status === 'CLOSED'}
-        >
-          <Plus className="h-5 w-5" />
-          Agregar línea
-        </Button>
       </div>
 
-      {optimisticLines.length === 0 ? (
+      {lines.length === 0 ? (
         <EmptyState
           icon={Package}
           title="Sin líneas"
-          description="Este contenedor no tiene productos. Agrega la primera línea."
-          action={
-            container.status !== 'CLOSED'
-              ? { label: '+ Agregar línea', onClick: () => setDialogOpen(true) }
-              : undefined
-          }
+          description="Este contenedor no tiene líneas de producto registradas."
         />
       ) : (
         <ContainerLinesTable
-          lines={optimisticLines}
+          lines={lines}
           products={products}
           lots={lots}
         />
       )}
-
-      <AddLineDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        ownerId={container.ownerId}
-        onSubmit={handleCreate}
-      />
     </>
   );
 }
