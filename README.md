@@ -99,36 +99,37 @@ wms-frontend/
 │   │   │   ├── page.tsx                   # Filtros: owner → bodega → status → bin (URL params)
 │   │   │   ├── loading.tsx
 │   │   │   ├── _components/
-│   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + optimistic RECEIVE/PUTAWAY/MOVE
+│   │   │   │   ├── ContainersClient.tsx   # Filtros en cascada + consume useContainerActions
 │   │   │   │   ├── ContainersTable.tsx    # Botones Putaway/Move por status + link al detalle
-│   │   │   │   ├── ContainerDialog.tsx    # Flujo RECEIVE: tipo (API) + producto + cantidad
+│   │   │   │   ├── ContainerDialog.tsx    # Flujo RECEIVE: tipo + producto + LotSection + cantidad
+│   │   │   │   ├── LotSection.tsx         # Sub-componente controlado: lote existente o nuevo (solo productos con hasExpiration)
+│   │   │   │   ├── useContainerActions.ts # Hook: optimistic updates + receiveContainerAction/putaway/move
 │   │   │   │   ├── PutawayDialog.tsx      # Asigna bin a contenedor CREATED → ACTIVE
 │   │   │   │   ├── MoveDialog.tsx         # Mueve contenedor ACTIVE a otro bin
 │   │   │   │   └── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
 │   │   │   │
 │   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas (solo lectura)
-│   │   │       ├── page.tsx               # Fetch: container + lines + products; type/ownerId vía searchParams
+│   │   │       ├── page.tsx               # Fetch: container + lines + products + lots; type/ownerId vía searchParams
 │   │   │       ├── loading.tsx
 │   │   │       └── _components/
-│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor (ContainerDetail) + líneas
-│   │   │           └── ContainerLinesTable.tsx    # Tabla: producto, lote, qty
+│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor + líneas; "Volver" usa router.back()
+│   │   │           └── ContainerLineCard.tsx      # Tarjeta por línea: producto, qty (Total/Disponible/Reservado), lote
 │   │   │
 │   │   ├── lots/                          # Gestión de Lotes (Lots)
 │   │   │   ├── page.tsx                   # Carga todos los lotes, filtra por owner en servidor
 │   │   │   ├── loading.tsx
 │   │   │   └── _components/
-│   │   │       ├── LotsClient.tsx         # Filtro por owner + optimistic
-│   │   │       ├── LotsTable.tsx          # Tabla con lookup de producto + badge de vencimiento
-│   │   │       ├── LotDialog.tsx          # Owner → Producto → Batch Code → Fechas
+│   │   │       ├── LotsClient.tsx         # OwnerGate (sin owner) + OwnerSelect rápido + optimistic
+│   │   │       ├── LotsTable.tsx          # Cols: Producto | Código de Lote | Recepción | Vencimiento
+│   │   │       ├── LotDialog.tsx          # Owner bloqueado → Producto → Batch Code → Fechas (con restricciones de fecha)
 │   │   │       └── LotExpirationBadge.tsx # Rojo=vencido, ámbar≤30d, gris=ok
 │   │   │
 │   │   ├── products/                      # Gestión de Productos
 │   │   │   ├── page.tsx
 │   │   │   ├── loading.tsx
 │   │   │   ├── _components/
-│   │   │   │   ├── ProductsClient.tsx
-│   │   │   │   ├── ProductDialog.tsx
-│   │   │   │   └── ProductOwnerFilter.tsx
+│   │   │   │   ├── ProductsClient.tsx     # OwnerGate (sin owner) + OwnerSelect + paginado + optimistic
+│   │   │   │   └── ProductDialog.tsx
 │   │   │   └── bulk-upload/
 │   │   │       ├── page.tsx
 │   │   │       ├── BulkUploadForm.tsx
@@ -143,7 +144,7 @@ wms-frontend/
 │   │       ├── locations.ts
 │   │       ├── products.ts
 │   │       ├── containers.ts              # receiveContainerAction + putawayContainerAction + moveContainerAction
-│   │       │                              # queryContainerTypes + queryLineProducts
+│   │       │                              # queryContainerTypes + queryLineProducts + queryProductLots
 │   │       └── lots.ts                    # createLot + queryLotProducts
 │   │
 │   ├── services/                          # Clientes HTTP hacia wms-core
@@ -155,7 +156,7 @@ wms-frontend/
 │   │   ├── containerService.ts            # fetchContainers + fetchContainerById (→ ContainerDetail)
 │   │   │                                  # receiveContainer + putawayContainer + moveContainer
 │   │   ├── containerTypeService.ts        # fetchContainerTypes — GET /container-types
-│   │   ├── containerLineService.ts        # fetchContainerLines — GET /inventory-containers/:id/lines
+│   │   ├── containerLineService.ts        # fetchContainerLines — GET /inventory/containers/:id/lines
 │   │   └── lotService.ts                 # fetchLots + postLot
 │   │
 │   ├── types/
@@ -189,6 +190,7 @@ wms-frontend/
 │           ├── container-status-badge.tsx # CREATED / ACTIVE / CLOSED / QUARANTINE
 │           ├── data-table.tsx             # DataTable<T> genérico — filas fat-finger py-5
 │           ├── empty-state.tsx            # Estado vacío con ícono, título y acción opcional
+│           ├── owner-gate.tsx             # Gate de selección de owner: tarjetas + búsqueda (compartido)
 │           ├── owner-select.tsx           # Select de owner controlado (sin routing interno)
 │           ├── page-header.tsx            # Encabezado de página: section + title + description
 │           ├── paginator.tsx              # Paginación numérica
@@ -248,7 +250,7 @@ La URL base se configura en `.env.local` con `NEXT_PUBLIC_API_URL`.
 | Inventario — Recibir | `POST` | `/inventory/receive` | Crea contenedor + línea, sin ubicación → CREATED |
 | Inventario — Putaway | `POST` | `/inventory/containers/:id/putaway` | Asigna bin al contenedor CREATED → ACTIVE |
 | Inventario — Mover | `POST` | `/inventory/containers/:id/move` | Mueve contenedor ACTIVE a otro bin |
-| Líneas | `GET` | `/inventory-containers/:id/lines` | Listar líneas del contenedor (solo lectura) |
+| Líneas | `GET` | `/inventory/containers/:id/lines` | Listar líneas del contenedor (solo lectura) |
 | Lotes | `GET` | `/lots` | Listar todos (filtro por owner en cliente) |
 | Lotes | `POST` | `/lots` | Crear lote |
 | Productos | `GET` | `/products?ownerId=&page=&limit=&q=` | Listar paginado |
@@ -307,7 +309,15 @@ MOVE     →  Reubica el contenedor a otro bin (desde ACTIVE)
 
 `ContainerDialog` ejecuta el RECEIVE. `PutawayDialog` y `MoveDialog` aparecen como acciones en la tabla según el status del contenedor.
 
-### 10. Toast notifications con Sonner
+### 10. OwnerGate — pre-estado de selección de owner
+
+Las vistas de **Productos** y **Lotes** usan un componente `OwnerGate` (`components/ui/owner-gate.tsx`) como pantalla de entrada cuando no hay `ownerId` en la URL. Muestra las tarjetas de owners activos con búsqueda, y al seleccionar uno navega a `?ownerId=<id>`. Una vez dentro, el `OwnerSelect` en el header permite cambiar de owner directamente sin volver al gate. Seleccionar "Todos los owners" en el `OwnerSelect` limpia el param y regresa al gate.
+
+### 11. LotSection — sub-componente controlado para lotes en RECEIVE
+
+`LotSection` encapsula toda la lógica de lote dentro del flujo de recepción de inventario. Se monta solo cuando el producto seleccionado tiene `hasExpiration = true`. Su interfaz es `onChange: (LotPayload | null) => void`; el padre (`ContainerDialog`) solo conoce si el lote está listo o no. Internamente decide entre **lote existente** (seleccionar `lotId`) o **lote nuevo** (ingresar `batchCode` + fechas), usando el patrón `onChangeRef` para evitar closures stale.
+
+### 12. Toast notifications con Sonner
 
 `<Toaster />` (de `components/ui/sonner.tsx`) está montado en `src/app/layout.tsx`. Los Clients llaman a `toast.success(...)` / `toast.error(...)` usando el campo `data` que retorna la Server Action para mostrar el nombre o código real de la entidad afectada (ej: `"Bin creado — PA-001 › RK-001 › BIN-001"`). Los servicios HTTP propagan el campo `message` del body de error para que el toast muestre el motivo real del backend en lugar de un genérico "HTTP 400".
 
@@ -377,20 +387,19 @@ Los archivos bajo `src/` se importan con `@/src/`. No mover archivos de `src/` a
 | Bodegas | `/warehouses` | ✅ Implementado | CRUD completo + filtro por owner |
 | Ubicaciones | `/locations` | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
 | Contenedores | `/containers` | ✅ Implementado | Flujo RECEIVE/PUTAWAY/MOVE + filtros owner → bodega → status → bin (bin solo cuando ACTIVE) |
-| Contenedores — Detalle | `/containers/[id]` | ✅ Implementado | Solo lectura — tipo/ownerId vía searchParams; líneas sin agregar manualmente |
-| Lotes | `/lots` | ✅ Implementado | Crear lote + tabla con badge de vencimiento |
+| Contenedores — Detalle | `/containers/[id]` | ✅ Implementado | Solo lectura — líneas como tarjetas con qty Total/Disponible/Reservado + datos de lote |
+| Lotes | `/lots` | ✅ Implementado | OwnerGate + OwnerSelect + crear lote con restricciones de fecha + tabla con badge de vencimiento |
 | Productos — Catálogo | `/products` | ✅ Implementado | Listado paginado + creación individual |
 | Productos — Carga masiva CSV | `/products/bulk-upload` | ✅ Implementado | Drag-and-drop + errores de validación por fila |
 | Login / Autenticación | — | 🔲 Pendiente | El ownerId se integrará con la sesión |
 | Movimientos de Stock | — | 🔲 Pendiente | — |
 | Reportes | — | 🔲 Pendiente | — |
 
-### Bugs conocidos (pendientes en backend)
+### Limitaciones conocidas
 
-| Bug | Impacto | Archivo |
+| Limitación | Impacto | Ubicación |
 |---|---|---|
-| `receivedAt` no se persiste en Lot | El campo se envía pero siempre llega `null` en la respuesta | `LotMapper.toDomain` — no recibe el parámetro |
-| `GET /lots` sin filtro por owner | Se cargan todos los lotes y se filtra en cliente | `LotService.getAllLots` — usar `findByOwner_OwnerId` |
+| `GET /lots` sin filtro por owner | Se cargan todos los lotes y se filtra en cliente | `LotService.getAllLots` — usar `findByOwner_OwnerId` en backend |
 
 ---
 
