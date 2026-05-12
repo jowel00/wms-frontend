@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Package } from 'lucide-react';
 import { ContainerStatusBadge } from '@/components/ui/container-status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ContainerLinesTable } from './ContainerLinesTable';
+import { ContainerLineCard } from './ContainerLineCard';
 import type { ContainerDetail, ContainerLine, ContainerType, ProductListItem, Lot } from '@/src/types/inventory';
 import { CONTAINER_TYPE_LABELS } from '@/src/types/inventory';
 
@@ -25,20 +25,25 @@ export function ContainerDetailClient({
   lots,
   locationCode,
 }: ContainerDetailClientProps) {
+  const router     = useRouter();
+  const productMap = new Map(products.map((p) => [p.productId, p]));
+  const lotMap     = new Map(lots.map((l) => [l.lotId, l]));
+
   return (
     <>
       {/* Breadcrumb */}
       <div className="mb-6">
-        <Link
-          href="/containers"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver a contenedores
-        </Link>
+        </button>
       </div>
 
-      {/* Info del contenedor */}
+      {/* Metadata del contenedor */}
       <div className="flex flex-wrap items-start gap-6 mb-8 p-5 rounded-xl border bg-card">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">ID</span>
@@ -62,28 +67,31 @@ export function ContainerDetailClient({
         </div>
       </div>
 
-      {/* Líneas — solo lectura */}
-      <div className="flex items-center gap-3 mb-5">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          Líneas
-          <span className="ml-2 font-normal normal-case tracking-normal">
-            ({lines.length})
-          </span>
-        </p>
-      </div>
+      {/* Contenido */}
+      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+        Contenido
+        <span className="ml-2 font-normal normal-case tracking-normal">
+          ({lines.length} {lines.length === 1 ? 'línea' : 'líneas'})
+        </span>
+      </p>
 
       {lines.length === 0 ? (
         <EmptyState
           icon={Package}
-          title="Sin líneas"
+          title="Sin contenido"
           description="Este contenedor no tiene líneas de producto registradas."
         />
       ) : (
-        <ContainerLinesTable
-          lines={lines}
-          products={products}
-          lots={lots}
-        />
+        <div className="space-y-4">
+          {lines.map((line) => (
+            <ContainerLineCard
+              key={line.containerLineId}
+              line={line}
+              product={productMap.get(line.productId)}
+              lot={line.lotId ? lotMap.get(line.lotId) : undefined}
+            />
+          ))}
+        </div>
       )}
     </>
   );
