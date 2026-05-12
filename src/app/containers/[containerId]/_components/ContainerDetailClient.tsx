@@ -33,7 +33,7 @@ export function ContainerDetailClient({
   locations,
   events,
 }: ContainerDetailClientProps) {
-  const router     = useRouter();
+  const { back } = useRouter();
   const productMap = new Map(products.map((p) => [p.productId, p]));
   const lotMap     = new Map(lots.map((l) => [l.lotId, l]));
   const [activeTab, setActiveTab] = useState<Tab>('content');
@@ -44,7 +44,7 @@ export function ContainerDetailClient({
       <div className="mb-6">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => back()}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />

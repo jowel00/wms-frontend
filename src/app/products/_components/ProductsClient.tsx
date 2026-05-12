@@ -77,8 +77,8 @@ export function ProductsClient({
   initialSearch,
   initialOwnerFilter,
 }: ProductsClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { replace } = useRouter();
+  const pathname    = usePathname();
   const [, startActionTransition] = useTransition();
 
   const [optimisticProducts, dispatchOptimistic] = useOptimistic(
@@ -99,7 +99,7 @@ export function ProductsClient({
       params.delete('ownerId');
     }
     params.set('page', '1');
-    router.replace(`${pathname}?${params.toString()}`);
+    replace(`${pathname}?${params.toString()}`);
   }
 
   function handleSubmit(data: ProductFormValues) {

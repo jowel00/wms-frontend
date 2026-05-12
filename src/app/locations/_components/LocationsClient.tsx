@@ -72,8 +72,8 @@ function LocationsClientInner({
   rackId,
   rackCode,
 }: LocationsClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { push } = useRouter();
+  const pathname  = usePathname();
   const [, startActionTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -101,9 +101,9 @@ function LocationsClientInner({
 
   function handleRowClick(location: Location) {
     if (location.type === 'PASILLO') {
-      router.push(buildUrl({ warehouseId, aisleId: location.locationId, aisleCode: location.code }));
+      push(buildUrl({ warehouseId, aisleId: location.locationId, aisleCode: location.code }));
     } else if (location.type === 'RACK') {
-      router.push(buildUrl({ warehouseId, aisleId, aisleCode, rackId: location.locationId, rackCode: location.code }));
+      push(buildUrl({ warehouseId, aisleId, aisleCode, rackId: location.locationId, rackCode: location.code }));
     }
   }
 

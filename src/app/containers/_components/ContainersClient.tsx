@@ -63,8 +63,8 @@ function ContainersClientInner({
   status,
   locationId,
 }: ContainersClientProps) {
-  const router   = useRouter();
-  const pathname = usePathname();
+  const { push } = useRouter();
+  const pathname  = usePathname();
 
   const [receiveOpen, setReceiveOpen]         = useState(false);
   const [putawayOpen, setPutawayOpen]         = useState(false);
@@ -87,7 +87,7 @@ function ContainersClientInner({
   const selectedWarehouse = warehouses.find((w) => w.warehouseId === warehouseId);
 
   function pushParams(params: Record<string, string | undefined>) {
-    router.push(`${pathname}?${buildParams(params)}`);
+    push(`${pathname}?${buildParams(params)}`);
   }
 
   function handleOwnerChange(id: string)     { pushParams({ ownerId: id }); }

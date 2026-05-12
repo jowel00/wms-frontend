@@ -37,8 +37,8 @@ function WarehousesClientInner({
   initialSearch,
   initialOwnerFilter,
 }: WarehousesClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { replace } = useRouter();
+  const pathname    = usePathname();
   const searchParams = useSearchParams();
   const [, startActionTransition] = useTransition();
 
@@ -68,7 +68,7 @@ function WarehousesClientInner({
     } else {
       params.delete('ownerId');
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    replace(`${pathname}?${params.toString()}`);
   }
 
   function openCreate() {

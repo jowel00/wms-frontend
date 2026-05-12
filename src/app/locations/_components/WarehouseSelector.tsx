@@ -17,13 +17,13 @@ interface WarehouseSelectorProps {
 }
 
 export function WarehouseSelector({ warehouses, value }: WarehouseSelectorProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { push } = useRouter();
+  const pathname  = usePathname();
 
   function handleChange(warehouseId: string) {
     // Reinicia toda la jerarquía al cambiar de bodega
     const params = new URLSearchParams({ warehouseId });
-    router.push(`${pathname}?${params.toString()}`);
+    push(`${pathname}?${params.toString()}`);
   }
 
   return (

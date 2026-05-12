@@ -28,8 +28,8 @@ interface LotsClientProps {
 }
 
 function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { push } = useRouter();
+  const pathname  = usePathname();
   const [, startActionTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -39,7 +39,7 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
   );
 
   function pushParams(params: Record<string, string | undefined>) {
-    router.push(`${pathname}?${buildParams(params)}`);
+    push(`${pathname}?${buildParams(params)}`);
   }
 
   function handleCreate(data: LotFormValues) {
