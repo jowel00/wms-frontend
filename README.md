@@ -108,12 +108,13 @@ wms-frontend/
 │   │   │   │   ├── MoveDialog.tsx         # Mueve contenedor ACTIVE a otro bin
 │   │   │   │   └── ContainerStatusBadge.tsx # CREATED/ACTIVE/CLOSED/QUARANTINE
 │   │   │   │
-│   │   │   └── [containerId]/             # Detalle de un contenedor — sus líneas (solo lectura)
-│   │   │       ├── page.tsx               # Fetch: container + lines + products + lots; type/ownerId vía searchParams
+│   │   │   └── [containerId]/             # Detalle de un contenedor
+│   │   │       ├── page.tsx               # Fetch: container + lines + products + lots + locations + events; type/ownerId/warehouseId vía searchParams
 │   │   │       ├── loading.tsx
 │   │   │       └── _components/
-│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor + líneas; "Volver" usa router.back()
-│   │   │           └── ContainerLineCard.tsx      # Tarjeta por línea: producto, qty (Total/Disponible/Reservado), lote
+│   │   │           ├── ContainerDetailClient.tsx  # Info del contenedor + pestañas: Contenido | Historial
+│   │   │           ├── ContainerLineCard.tsx      # Tarjeta por línea: producto, qty (Total/Disponible/Reservado), lote
+│   │   │           └── InventoryEventsTable.tsx   # Tabla de auditoría — resuelve productId/lotId/locationId a nombres legibles
 │   │   │
 │   │   ├── lots/                          # Gestión de Lotes (Lots)
 │   │   │   ├── page.tsx                   # Carga todos los lotes, filtra por owner en servidor
@@ -157,12 +158,14 @@ wms-frontend/
 │   │   │                                  # receiveContainer + putawayContainer + moveContainer
 │   │   ├── containerTypeService.ts        # fetchContainerTypes — GET /container-types
 │   │   ├── containerLineService.ts        # fetchContainerLines — GET /inventory/containers/:id/lines
+│   │   ├── inventoryEventService.ts       # fetchInventoryEvents — GET /inventory/events?containerId=
 │   │   └── lotService.ts                 # fetchLots + postLot
 │   │
 │   ├── types/
 │   │   ├── inventory.ts                   # Product, Owner, Warehouse, Location, LocationType,
 │   │   │                                  # InventoryContainer, ContainerDetail, ContainerTypeItem,
-│   │   │                                  # ContainerLine, Lot, BulkUploadResponse
+│   │   │                                  # ContainerLine, Lot, BulkUploadResponse,
+│   │   │                                  # InventoryEvent, EventType
 │   │   └── actions.ts                     # ActionResult<T> — { success: true; data: T } | { error: string }
 │   │
 │   └── lib/
@@ -251,6 +254,7 @@ La URL base se configura en `.env.local` con `NEXT_PUBLIC_API_URL`.
 | Inventario — Putaway | `POST` | `/inventory/containers/:id/putaway` | Asigna bin al contenedor CREATED → ACTIVE |
 | Inventario — Mover | `POST` | `/inventory/containers/:id/move` | Mueve contenedor ACTIVE a otro bin |
 | Líneas | `GET` | `/inventory/containers/:id/lines` | Listar líneas del contenedor (solo lectura) |
+| Eventos de auditoría | `GET` | `/inventory/events?containerId=` | Historial completo de movimientos del contenedor |
 | Lotes | `GET` | `/lots` | Listar todos (filtro por owner en cliente) |
 | Lotes | `POST` | `/lots` | Crear lote |
 | Productos | `GET` | `/products?ownerId=&page=&limit=&q=` | Listar paginado |
@@ -338,13 +342,16 @@ Las vistas de **Productos** y **Lotes** usan un componente `OwnerGate` (`compone
 | `Lot` | `lotId`, `productId`, `ownerId`, `supplierId`, `batchCode`, `expiresAt`, `receivedAt` |
 | `Product` | `productId`, `ownerId`, `sellerSku`, `name`, `barcodeUpdEan?`, `requiresUnitTracking`, `hasExpiration`, `status`, `createdAt` |
 | `ProductListItem` | Versión resumida de `Product` para listados paginados |
+| `InventoryEvent` | `eventId`, `ownerId`, `warehouseId`, `eventType`, `containerId`, `containerlineId?`, `productId?`, `lotId?`, `fromLocationId?`, `toLocationId?`, `quantity`, `reason`, `actorId`, `createdAt` |
 
 **Notas de tipos:**
 - `ContainerStatus`: `'CREATED' | 'ACTIVE' | 'CLOSED' | 'QUARANTINE'`
 - `ContainerType`: `'BOX' | 'TOTE' | 'PALLET'` (el backend serializa en uppercase)
 - `LocationType`: `'PASILLO' | 'RACK' | 'BIN'`
+- `EventType`: `'RECEIVED' | 'PUTAWAY' | 'MOVE' | 'REBOX' | 'ADJUST' | 'CLOSED_CONTAINER' | 'QUARANTINE' | 'RELEASE_QUARANTINE'`
 - `expiresAt` / `receivedAt` en `Lot`: formato `"YYYY-MM-DD"` (Java `LocalDate`)
 - `ContainerDetail` y `InventoryContainer` tienen shapes distintos — el endpoint de lista devuelve `InventoryContainer` (con `ownerId`, `warehouseId`, `type`); el endpoint de detalle devuelve `ContainerDetail` (con código de ubicación ya resuelto)
+- `InventoryEvent` usa `@JsonInclude(NON_NULL)` en backend — los campos opcionales (`productId`, `lotId`, `fromLocationId`, `toLocationId`, `containerlineId`) llegan omitidos en el JSON cuando son null, resultando en `undefined` en runtime
 
 ---
 
@@ -387,7 +394,7 @@ Los archivos bajo `src/` se importan con `@/src/`. No mover archivos de `src/` a
 | Bodegas | `/warehouses` | ✅ Implementado | CRUD completo + filtro por owner |
 | Ubicaciones | `/locations` | ✅ Implementado | CRUD completo + selector de bodega obligatorio |
 | Contenedores | `/containers` | ✅ Implementado | Flujo RECEIVE/PUTAWAY/MOVE + filtros owner → bodega → status → bin (bin solo cuando ACTIVE) |
-| Contenedores — Detalle | `/containers/[id]` | ✅ Implementado | Solo lectura — líneas como tarjetas con qty Total/Disponible/Reservado + datos de lote |
+| Contenedores — Detalle | `/containers/[id]` | ✅ Implementado | Pestañas: **Contenido** (líneas como tarjetas) + **Historial** (tabla de auditoría con nombres resueltos) |
 | Lotes | `/lots` | ✅ Implementado | OwnerGate + OwnerSelect + crear lote con restricciones de fecha + tabla con badge de vencimiento |
 | Productos — Catálogo | `/products` | ✅ Implementado | Listado paginado + creación individual |
 | Productos — Carga masiva CSV | `/products/bulk-upload` | ✅ Implementado | Drag-and-drop + errores de validación por fila |
