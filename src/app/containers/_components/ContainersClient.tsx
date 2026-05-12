@@ -125,11 +125,11 @@ function ContainersClientInner({
       <div className="flex flex-wrap gap-4 mb-6">
         {/* Owner */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
             Owner
-          </label>
+          </span>
           <Select value={ownerId || undefined} onValueChange={handleOwnerChange}>
-            <SelectTrigger className={cn('w-64 h-16 text-base font-semibold', !ownerId && 'border-primary border-2 text-primary')}>
+            <SelectTrigger aria-label="Owner" className={cn('w-64 h-16 text-base font-semibold', !ownerId && 'border-primary border-2 text-primary')}>
               <SelectValue placeholder="↓ Selecciona un owner" />
             </SelectTrigger>
             <SelectContent>
@@ -145,15 +145,15 @@ function ContainersClientInner({
         {/* Bodega — visible cuando hay owner */}
         {ownerId && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Bodega
-            </label>
+            </span>
             <Select
               value={warehouseId || undefined}
               onValueChange={handleWarehouseChange}
               disabled={filteredWarehouses.length === 0}
             >
-              <SelectTrigger className={cn('w-64 h-16 text-base font-semibold', !warehouseId && 'border-primary border-2 text-primary')}>
+              <SelectTrigger aria-label="Bodega" className={cn('w-64 h-16 text-base font-semibold', !warehouseId && 'border-primary border-2 text-primary')}>
                 <SelectValue placeholder={filteredWarehouses.length === 0 ? 'Sin bodegas' : '↓ Selecciona una bodega'} />
               </SelectTrigger>
               <SelectContent>
@@ -171,14 +171,14 @@ function ContainersClientInner({
         {/* Estado — visible cuando hay bodega */}
         {warehouseId && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Estado
-            </label>
+            </span>
             <Select
               value={status || '__all__'}
               onValueChange={(v) => handleStatusChange(v === '__all__' ? '' : v)}
             >
-              <SelectTrigger className="w-48 h-16 text-base font-semibold">
+              <SelectTrigger aria-label="Estado" className="w-48 h-16 text-base font-semibold">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
@@ -199,15 +199,15 @@ function ContainersClientInner({
         {/* Ubicación — visible solo cuando status === ACTIVE */}
         {status === 'ACTIVE' && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Ubicación
-            </label>
+            </span>
             <Select
               value={locationId || '__all__'}
               onValueChange={(v) => handleLocationChange(v === '__all__' ? '' : v)}
               disabled={binOptions.length === 0}
             >
-              <SelectTrigger className="w-56 h-16 text-base font-semibold">
+              <SelectTrigger aria-label="Ubicación" className="w-56 h-16 text-base font-semibold">
                 <SelectValue placeholder={binOptions.length === 0 ? 'Sin bins' : 'Todos los bins'} />
               </SelectTrigger>
               <SelectContent>

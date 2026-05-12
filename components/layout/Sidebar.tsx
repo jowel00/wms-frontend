@@ -203,7 +203,7 @@ interface NavSectionProps {
 
 function NavSection({ items, collapsed, pathname }: NavSectionProps) {
   return (
-    <ul className="space-y-0.5 px-2" role="list">
+    <ul className="space-y-0.5 px-2">
       {items.map((item) => {
         const isActive =
           item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);

@@ -28,11 +28,12 @@ export function WarehouseSelector({ warehouses, value }: WarehouseSelectorProps)
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+      <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
         Bodega
-      </label>
+      </span>
       <Select value={value || undefined} onValueChange={handleChange}>
         <SelectTrigger
+          aria-label="Bodega"
           className={cn(
             'w-80 h-16 text-base font-semibold',
             !value && 'border-primary border-2 text-primary'

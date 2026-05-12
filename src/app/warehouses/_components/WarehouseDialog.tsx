@@ -150,6 +150,7 @@ export function WarehouseDialog({
                           variant="outline"
                           role="combobox"
                           aria-expanded={cityOpen}
+                          aria-controls="city-combobox-options"
                           className={cn(
                             'h-14 w-full justify-between text-base font-normal px-4',
                             !field.value && 'text-muted-foreground'
@@ -163,7 +164,7 @@ export function WarehouseDialog({
                     <PopoverContent className="w-full p-0" align="start">
                       <Command>
                         <CommandInput placeholder="Buscar ciudad..." className="h-11 text-base" />
-                        <CommandList>
+                        <CommandList id="city-combobox-options">
                           <CommandEmpty>No se encontró la ciudad.</CommandEmpty>
                           <CommandGroup>
                             {COLOMBIA_CITIES.map((option) => (
