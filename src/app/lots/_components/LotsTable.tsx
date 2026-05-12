@@ -14,15 +14,6 @@ export function LotsTable({ lots, products }: LotsTableProps) {
 
   const columns: Column<Lot>[] = [
     {
-      key: 'lotId',
-      header: 'ID Lote',
-      cell: (l) => (
-        <span className="font-mono text-sm text-muted-foreground">
-          {l.lotId.slice(0, 8).toUpperCase()}
-        </span>
-      ),
-    },
-    {
       key: 'productId',
       header: 'Producto',
       cell: (l) => {
@@ -50,16 +41,11 @@ export function LotsTable({ lots, products }: LotsTableProps) {
         ),
     },
     {
-      key: 'expiresAt',
-      header: 'Vencimiento',
-      cell: (l) => <LotExpirationBadge expiresAt={l.expiresAt} />,
-    },
-    {
       key: 'receivedAt',
-      header: 'Recibido',
+      header: 'Fecha de Recepción',
       cell: (l) =>
         l.receivedAt ? (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm">
             {new Date(l.receivedAt + 'T00:00:00').toLocaleDateString('es-CO', {
               day: '2-digit',
               month: 'short',
@@ -69,6 +55,11 @@ export function LotsTable({ lots, products }: LotsTableProps) {
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         ),
+    },
+    {
+      key: 'expiresAt',
+      header: 'Vencimiento',
+      cell: (l) => <LotExpirationBadge expiresAt={l.expiresAt} />,
     },
   ];
 

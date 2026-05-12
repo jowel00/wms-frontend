@@ -50,6 +50,17 @@ export function LotDialog({
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const todayIso = (() => {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  })();
+  const minExpiresAt = (() => {
+    const base = receivedAt || todayIso;
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  })();
+
   useEffect(() => {
     if (!open) return;
     setSelectedOwnerId(defaultOwnerId ?? '');
@@ -109,26 +120,14 @@ export function LotDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
-          {/* Owner */}
+          {/* Owner — solo lectura, viene del filtro superior */}
           <div className="space-y-2">
             <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Owner
             </Label>
-            <Select
-              value={selectedOwnerId}
-              onValueChange={setSelectedOwnerId}
-            >
-              <SelectTrigger className="h-14 text-base">
-                <SelectValue placeholder="Selecciona el owner" />
-              </SelectTrigger>
-              <SelectContent>
-                {owners.map((o) => (
-                  <SelectItem key={o.ownerId} value={o.ownerId} className="text-base py-3">
-                    {o.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="h-14 flex items-center px-3 rounded-md border bg-muted/50 text-base font-semibold text-muted-foreground">
+              {owners.find((o) => o.ownerId === selectedOwnerId)?.name ?? '—'}
+            </div>
           </div>
 
           {/* Producto */}
@@ -187,26 +186,32 @@ export function LotDialog({
 
           {/* Fechas */}
           {selectedProductId && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 items-end">
               <div className="space-y-2">
-                <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                  Vencimiento
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Recepción
                 </Label>
                 <Input
                   type="date"
-                  value={expiresAt}
-                  onChange={(e) => { setExpiresAt(e.target.value); setValidationError(null); }}
+                  min={todayIso}
+                  value={receivedAt}
+                  onChange={(e) => {
+                    setReceivedAt(e.target.value);
+                    if (expiresAt && expiresAt <= e.target.value) setExpiresAt('');
+                    setValidationError(null);
+                  }}
                   className="h-14 text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                  Recibido
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Vencimiento
                 </Label>
                 <Input
                   type="date"
-                  value={receivedAt}
-                  onChange={(e) => { setReceivedAt(e.target.value); setValidationError(null); }}
+                  min={minExpiresAt}
+                  value={expiresAt}
+                  onChange={(e) => { setExpiresAt(e.target.value); setValidationError(null); }}
                   className="h-14 text-base"
                 />
               </div>
