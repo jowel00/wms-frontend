@@ -78,13 +78,13 @@ export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarP
               onClick={onToggle}
               aria-label={collapsed ? 'Expandir panel' : 'Colapsar panel'}
               className={cn(
-                'flex items-center justify-center h-8 w-8 rounded-md shrink-0',
+                'flex items-center justify-center size-8 rounded-md shrink-0',
                 'text-sidebar-foreground/50 hover:text-white hover:bg-sidebar-accent transition-colors'
               )}
             >
               {collapsed
-                ? <ChevronRight className="h-4 w-4" />
-                : <ChevronLeft className="h-4 w-4" />
+                ? <ChevronRight className="size-4" />
+                : <ChevronLeft className="size-4" />
               }
             </button>
           </TooltipTrigger>
@@ -123,8 +123,8 @@ export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarP
               className="flex items-center w-full gap-3 px-3 py-2.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white transition-colors"
             >
               {isDark
-                ? <Sun className="h-4 w-4 shrink-0" />
-                : <Moon className="h-4 w-4 shrink-0" />
+                ? <Sun className="size-4 shrink-0" />
+                : <Moon className="size-4 shrink-0" />
               }
               <span className="font-medium">{isDark ? 'Modo claro' : 'Modo oscuro'}</span>
             </button>
@@ -137,7 +137,7 @@ export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarP
               disabled
               className="flex items-center w-full gap-3 px-3 py-2.5 text-sm text-sidebar-foreground/30 cursor-not-allowed"
             >
-              <Settings className="h-4 w-4 shrink-0" />
+              <Settings className="size-4 shrink-0" />
               <span className="font-medium">Configuración</span>
             </button>
 
@@ -147,7 +147,7 @@ export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarP
               disabled
               className="flex items-center w-full gap-3 px-3 py-2.5 text-sm text-sidebar-foreground/30 cursor-not-allowed"
             >
-              <LogOut className="h-4 w-4 shrink-0" />
+              <LogOut className="size-4 shrink-0" />
               <span className="font-medium">Cerrar sesión</span>
             </button>
           </div>
@@ -167,8 +167,8 @@ export function Sidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarP
               )}
             >
               {/* Avatar */}
-              <div className="h-7 w-7 rounded-full bg-sidebar-primary/40 flex items-center justify-center shrink-0">
-                <User className="h-4 w-4 text-white" />
+              <div className="size-7 rounded-full bg-sidebar-primary/40 flex items-center justify-center shrink-0">
+                <User className="size-4 text-white" />
               </div>
 
               {!collapsed && (
@@ -229,7 +229,7 @@ function NavSection({ items, collapsed, pathname }: NavSectionProps) {
                 className="absolute left-0 top-2.5 bottom-2.5 w-[3px] bg-sidebar-primary rounded-r-full"
               />
             )}
-            <Icon className="h-5 w-5 shrink-0" />
+            <Icon className="size-5 shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );

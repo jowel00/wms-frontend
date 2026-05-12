@@ -99,7 +99,7 @@ export function ProductDialog({
                   <FormLabel className="text-base font-semibold">Owner</FormLabel>
                   {lockedOwnerId ? (
                     <div className="flex items-center gap-3 h-14 px-4 rounded-md border border-border bg-muted/50">
-                      <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <Building2 className="size-4 text-muted-foreground shrink-0" />
                       <span className="text-base font-medium text-foreground flex-1 truncate">
                         {lockedOwnerName ?? lockedOwnerId}
                       </span>

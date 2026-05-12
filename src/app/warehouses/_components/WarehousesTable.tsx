@@ -57,11 +57,11 @@ export function WarehousesTable({ warehouses, onEdit }: WarehousesTableProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10"
+          className="size-10"
           onClick={() => onEdit(w)}
           aria-label={`Editar ${w.name}`}
         >
-          <Pencil className="h-5 w-5" />
+          <Pencil className="size-5" />
         </Button>
       ),
     },

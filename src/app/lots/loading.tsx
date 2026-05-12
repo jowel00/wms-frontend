@@ -15,7 +15,7 @@ export default function LotesLoading() {
           <Skeleton className="h-16 w-64 rounded-lg" />
         </div>
       </div>
-      <Skeleton className="h-4 w-40 mb-5" />
+      <Skeleton className="size-40 mb-5" />
       <TableSkeleton columns={5} rows={6} />
     </div>
   );

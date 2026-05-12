@@ -13,7 +13,7 @@ export default function UbicacionesLoading() {
         <Skeleton className="h-4 w-16 mb-1.5" />
         <Skeleton className="h-16 w-80 rounded-lg" />
       </div>
-      <Skeleton className="h-4 w-48 mb-5" />
+      <Skeleton className="size-48 mb-5" />
       <TableSkeleton columns={3} rows={6} />
     </div>
   );

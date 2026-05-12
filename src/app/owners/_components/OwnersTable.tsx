@@ -42,11 +42,11 @@ export function OwnersTable({ owners, onEdit }: OwnersTableProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10"
+          className="size-10"
           onClick={() => onEdit(o)}
           aria-label={`Editar ${o.name}`}
         >
-          <Pencil className="h-5 w-5" />
+          <Pencil className="size-5" />
         </Button>
       ),
     },

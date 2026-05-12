@@ -17,7 +17,7 @@ export default function Loading() {
 
       {/* Barra superior: conteo + paginador compacto */}
       <div className="flex items-center justify-between mb-4">
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className="size-48" />
         <Skeleton className="h-9 w-40" />
       </div>
 

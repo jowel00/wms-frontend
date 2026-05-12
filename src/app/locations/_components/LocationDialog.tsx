@@ -160,7 +160,7 @@ export function LocationDialog({
             className="h-12 px-8 text-base font-bold uppercase tracking-wider gap-2"
           >
             {loadingTypes ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />Preparando...</>
+              <><Loader2 className="size-4 animate-spin" />Preparando...</>
             ) : (
               `Crear ${typeLabel}`
             )}

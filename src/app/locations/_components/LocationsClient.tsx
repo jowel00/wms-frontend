@@ -193,7 +193,7 @@ function LocationsClientInner({
               className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
               size="lg"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="size-5" />
               Nueva ubicación
             </Button>
           </div>

@@ -36,8 +36,8 @@ export function OwnerGate({
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-6">
-        <Building2 className="w-10 h-10 text-primary" />
+      <div className="flex items-center justify-center size-20 rounded-2xl bg-primary/10 mb-6">
+        <Building2 className="size-10 text-primary" />
       </div>
       <h2 className="text-2xl font-black text-foreground uppercase tracking-wide text-center">
         {title}
@@ -48,7 +48,7 @@ export function OwnerGate({
 
       {activeOwners.length > 0 && (
         <div className="relative w-full max-w-3xl mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={search}
@@ -75,14 +75,14 @@ export function OwnerGate({
                 className="group w-full flex items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-5 py-4 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 shrink-0 transition-colors group-hover:bg-primary/20">
-                    <Building2 className="w-4 h-4 text-primary" />
+                  <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 shrink-0 transition-colors group-hover:bg-primary/20">
+                    <Building2 className="size-4 text-primary" />
                   </div>
                   <span className="text-sm font-semibold text-foreground leading-snug break-words whitespace-normal">
                     {owner.name}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                <ChevronRight className="size-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </button>
             </li>
           ))}

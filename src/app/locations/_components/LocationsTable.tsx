@@ -39,8 +39,8 @@ export function LocationsTable({ locations, onRowClick }: LocationsTableProps) {
       className: 'text-right',
       cell: (l) =>
         !isLeaf(l) ? (
-          <div className="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-            <ChevronRight className="h-4 w-4" />
+          <div className="ml-auto flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+            <ChevronRight className="size-4" />
           </div>
         ) : null,
     },

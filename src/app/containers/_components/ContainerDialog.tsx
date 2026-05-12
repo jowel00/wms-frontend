@@ -177,7 +177,7 @@ export function ContainerDialog({
 
           {loading ? (
             <div className="h-14 flex items-center gap-2 px-3 text-muted-foreground text-sm border rounded-md">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
               Cargando tipos y productos...
             </div>
           ) : (

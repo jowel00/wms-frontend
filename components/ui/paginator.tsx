@@ -55,7 +55,7 @@ export function Paginator({ currentPage, totalPages, variant = 'full', className
           disabled={isFirst}
           aria-label="Primera página"
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronsLeft className="size-4" />
         </Button>
       )}
 
@@ -66,7 +66,7 @@ export function Paginator({ currentPage, totalPages, variant = 'full', className
         disabled={isFirst}
         aria-label="Página anterior"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="size-4" />
       </Button>
 
       {pages.map((p) => (
@@ -90,7 +90,7 @@ export function Paginator({ currentPage, totalPages, variant = 'full', className
         disabled={isLast}
         aria-label="Página siguiente"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="size-4" />
       </Button>
 
       {variant === 'full' && (
@@ -101,7 +101,7 @@ export function Paginator({ currentPage, totalPages, variant = 'full', className
           disabled={isLast}
           aria-label="Última página"
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronsRight className="size-4" />
         </Button>
       )}
     </div>

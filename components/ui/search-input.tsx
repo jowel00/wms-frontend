@@ -74,9 +74,9 @@ export function SearchInput({
   const inputEl = (
     <div className={cn('relative', filters ? 'flex-1 min-w-0' : className)}>
       {isPending ? (
-        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary animate-spin pointer-events-none" />
+        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-primary animate-spin pointer-events-none" />
       ) : (
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground pointer-events-none" />
       )}
       <Input
         value={search}

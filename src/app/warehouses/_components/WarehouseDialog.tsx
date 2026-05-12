@@ -156,7 +156,7 @@ export function WarehouseDialog({
                           )}
                         >
                           {field.value || 'Selecciona una ciudad'}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -179,7 +179,7 @@ export function WarehouseDialog({
                               >
                                 <Check
                                   className={cn(
-                                    'mr-2 h-4 w-4',
+                                    'mr-2 size-4',
                                     field.value === option.city ? 'opacity-100' : 'opacity-0'
                                   )}
                                 />
@@ -268,7 +268,7 @@ export function WarehouseDialog({
             {/* Advertencia límite */}
             {ownerAtLimit && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <AlertTriangle className="size-4 shrink-0" />
                 Este owner ya tiene {MAX_WAREHOUSES_PER_OWNER} bodegas (límite máximo permitido).
               </div>
             )}

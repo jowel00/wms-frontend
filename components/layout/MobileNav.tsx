@@ -57,7 +57,7 @@ export function MobileNav() {
               : 'bg-sidebar-primary text-white active:bg-sidebar-primary/80'
           )}
         >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
           <span>{open ? 'Cerrar' : 'Menú'}</span>
         </button>
       </header>
@@ -87,7 +87,7 @@ export function MobileNav() {
                       : 'bg-card border border-border text-foreground hover:bg-primary/10'
                   )}
                 >
-                  <Icon className="h-9 w-9 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon className="size-9 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
                   <span className="text-sm font-black uppercase tracking-wider text-center leading-tight">
                     {item.tileLabel ?? item.pageName}
                   </span>
@@ -118,7 +118,7 @@ export function MobileNav() {
                         : 'bg-card border border-border text-foreground hover:bg-primary/10'
                     )}
                   >
-                    <Icon className="h-8 w-8 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+                    <Icon className="size-8 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
                     <span className="text-sm font-black uppercase tracking-wider text-center leading-tight">
                       {item.tileLabel ?? item.pageName}
                     </span>

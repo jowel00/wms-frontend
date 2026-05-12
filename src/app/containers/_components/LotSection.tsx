@@ -105,7 +105,7 @@ export function LotSection({ ownerId, productId, onChange }: LotSectionProps) {
   if (loading) {
     return (
       <div className="h-10 flex items-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="size-4 animate-spin" />
         Buscando lotes del producto...
       </div>
     );
