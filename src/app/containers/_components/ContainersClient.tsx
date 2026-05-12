@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useOptimistic, useTransition, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { Package, Plus } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -17,15 +16,10 @@ import {
 import { cn } from '@/lib/utils';
 import { buildParams } from '@/src/lib/url';
 import { useContainers } from '@/hooks/useContainers';
+import { useContainerActions } from './useContainerActions';
 import { ContainersTable } from './ContainersTable';
-import {
-  receiveContainerAction,
-  putawayContainerAction,
-  moveContainerAction,
-} from '@/src/app/actions/containers';
-import { formatBackendError } from '@/src/lib/formatError';
 import type { Owner, Warehouse, InventoryContainer, Location, ContainerStatus } from '@/src/types/inventory';
-import type { ReceiveFormValues, PutawayFormValues, MoveFormValues } from '@/src/lib/validations/containers';
+import type { PutawayFormValues, MoveFormValues } from '@/src/lib/validations/containers';
 
 const ContainerDialog = dynamic(
   () => import('./ContainerDialog').then((m) => m.ContainerDialog),
@@ -41,11 +35,11 @@ const MoveDialog = dynamic(
 );
 
 const STATUS_OPTIONS: { value: ContainerStatus | ''; label: string }[] = [
-  { value: '',            label: 'Todos'       },
-  { value: 'CREATED',    label: 'Por ubicar'  },
-  { value: 'ACTIVE',     label: 'Ubicado'     },
-  { value: 'CLOSED',     label: 'Cerrado'     },
-  { value: 'QUARANTINE', label: 'Cuarentena'  },
+  { value: '',           label: 'Todos'      },
+  { value: 'CREATED',    label: 'Por ubicar' },
+  { value: 'ACTIVE',     label: 'Ubicado'    },
+  { value: 'CLOSED',     label: 'Cerrado'    },
+  { value: 'QUARANTINE', label: 'Cuarentena' },
 ];
 
 interface ContainersClientProps {
@@ -71,26 +65,14 @@ function ContainersClientInner({
 }: ContainersClientProps) {
   const router   = useRouter();
   const pathname = usePathname();
-  const [, startActionTransition] = useTransition();
 
   const [receiveOpen, setReceiveOpen]         = useState(false);
   const [putawayOpen, setPutawayOpen]         = useState(false);
   const [moveOpen, setMoveOpen]               = useState(false);
   const [activeContainer, setActiveContainer] = useState<InventoryContainer | null>(null);
 
-  const [optimisticContainers, dispatchOptimistic] = useOptimistic(
-    containers,
-    (state: InventoryContainer[], action:
-      | { type: 'add';    container: InventoryContainer }
-      | { type: 'update'; containerId: string; patch: Partial<InventoryContainer> }
-    ) => {
-      if (action.type === 'add')    return [...state, action.container];
-      if (action.type === 'update') return state.map((c) =>
-        c.containerId === action.containerId ? { ...c, ...action.patch } : c
-      );
-      return state;
-    }
-  );
+  const { optimisticContainers, handleReceive, handlePutaway, handleMove } =
+    useContainerActions(containers, locations);
 
   const filteredWarehouses = ownerId ? warehouses.filter((w) => w.ownerId === ownerId) : [];
 
@@ -101,6 +83,9 @@ function ContainersClientInner({
     locationId
   );
 
+  const selectedOwner     = owners.find((o) => o.ownerId === ownerId);
+  const selectedWarehouse = warehouses.find((w) => w.warehouseId === warehouseId);
+
   function pushParams(params: Record<string, string | undefined>) {
     router.push(`${pathname}?${buildParams(params)}`);
   }
@@ -108,70 +93,31 @@ function ContainersClientInner({
   function handleOwnerChange(id: string)     { pushParams({ ownerId: id }); }
   function handleWarehouseChange(id: string) { pushParams({ ownerId, warehouseId: id }); }
   function handleStatusChange(val: string) {
-    // Al cambiar de status se limpia el filtro de ubicación
     pushParams({ ownerId, warehouseId, status: val || undefined, locationId: undefined });
   }
   function handleLocationChange(val: string) {
     pushParams({ ownerId, warehouseId, status, locationId: val || undefined });
   }
 
-  // ── RECEIVE ────────────────────────────────────────────────────────────────
-  function handleReceive(data: ReceiveFormValues) {
-    const temp: InventoryContainer = {
-      containerId: `opt-${Date.now()}`,
-      ownerId:     data.ownerId,
-      warehouseId: data.warehouseId,
-      locationId:  null,
-      type:        '',
-      status:      'CREATED',
-    };
-    startActionTransition(async () => {
-      dispatchOptimistic({ type: 'add', container: temp });
-      const result = await receiveContainerAction(data);
-      if ('error' in result) toast.error(formatBackendError(result.error));
-      else toast.success('Contenedor recibido — pendiente de putaway');
-    });
-  }
-
-  // ── PUTAWAY ────────────────────────────────────────────────────────────────
   function openPutaway(container: InventoryContainer) {
     setActiveContainer(container);
     setPutawayOpen(true);
   }
 
-  function handlePutaway(containerId: string, data: PutawayFormValues) {
-    startActionTransition(async () => {
-      dispatchOptimistic({ type: 'update', containerId, patch: { locationId: data.locationId, status: 'ACTIVE' } });
-      const result = await putawayContainerAction(containerId, data);
-      if ('error' in result) toast.error(formatBackendError(result.error));
-      else {
-        const bin = locations.find((l) => l.locationId === data.locationId);
-        toast.success(`Putaway confirmado${bin ? ` — ${bin.code}` : ''}`);
-      }
-    });
-  }
-
-  // ── MOVE ───────────────────────────────────────────────────────────────────
   function openMove(container: InventoryContainer) {
     setActiveContainer(container);
     setMoveOpen(true);
   }
 
-  function handleMove(containerId: string, data: MoveFormValues) {
-    startActionTransition(async () => {
-      dispatchOptimistic({ type: 'update', containerId, patch: { locationId: data.toLocationId } });
-      const result = await moveContainerAction(containerId, data);
-      if ('error' in result) toast.error(formatBackendError(result.error));
-      else {
-        const bin = locations.find((l) => l.locationId === data.toLocationId);
-        toast.success(`Contenedor movido${bin ? ` → ${bin.code}` : ''}`);
-      }
-    });
+  function onPutawaySubmit(containerId: string, data: PutawayFormValues) {
+    handlePutaway(containerId, data);
   }
 
-  const hasWarehouse      = !!warehouseId;
-  const selectedOwner     = owners.find((o) => o.ownerId === ownerId);
-  const selectedWarehouse = warehouses.find((w) => w.warehouseId === warehouseId);
+  function onMoveSubmit(containerId: string, data: MoveFormValues) {
+    handleMove(containerId, data);
+  }
+
+  const hasWarehouse = !!warehouseId;
 
   return (
     <>
@@ -196,7 +142,7 @@ function ContainersClientInner({
           </Select>
         </div>
 
-        {/* Bodega */}
+        {/* Bodega — visible cuando hay owner */}
         {ownerId && (
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
@@ -222,13 +168,16 @@ function ContainersClientInner({
           </div>
         )}
 
-        {/* Status — visible cuando hay bodega */}
+        {/* Estado — visible cuando hay bodega */}
         {warehouseId && (
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Estado
             </label>
-            <Select value={status || '__all__'} onValueChange={(v) => handleStatusChange(v === '__all__' ? '' : v)}>
+            <Select
+              value={status || '__all__'}
+              onValueChange={(v) => handleStatusChange(v === '__all__' ? '' : v)}
+            >
               <SelectTrigger className="w-48 h-16 text-base font-semibold">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -247,7 +196,7 @@ function ContainersClientInner({
           </div>
         )}
 
-        {/* Bin — visible solo cuando status === ACTIVE */}
+        {/* Ubicación — visible solo cuando status === ACTIVE */}
         {status === 'ACTIVE' && (
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
@@ -340,14 +289,14 @@ function ContainersClientInner({
       <PutawayDialog
         open={putawayOpen}
         onOpenChange={setPutawayOpen}
-        onSubmit={handlePutaway}
+        onSubmit={onPutawaySubmit}
         container={activeContainer}
         locations={locations}
       />
       <MoveDialog
         open={moveOpen}
         onOpenChange={setMoveOpen}
-        onSubmit={handleMove}
+        onSubmit={onMoveSubmit}
         container={activeContainer}
         locations={locations}
       />
