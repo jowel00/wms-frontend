@@ -7,9 +7,17 @@ import type { Owner } from '@/src/types/inventory';
 
 interface OwnerGateProps {
   owners: Owner[];
+  title?: string;
+  description?: string;
+  extraParams?: Record<string, string>;
 }
 
-export function OwnerGate({ owners }: OwnerGateProps) {
+export function OwnerGate({
+  owners,
+  title = 'Selecciona un owner',
+  description = 'Elige un owner para continuar.',
+  extraParams = {},
+}: OwnerGateProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState('');
@@ -22,7 +30,8 @@ export function OwnerGate({ owners }: OwnerGateProps) {
     : activeOwners;
 
   function selectOwner(ownerId: string) {
-    router.push(`${pathname}?ownerId=${ownerId}&page=1`);
+    const params = new URLSearchParams({ ownerId, ...extraParams });
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
@@ -31,10 +40,10 @@ export function OwnerGate({ owners }: OwnerGateProps) {
         <Building2 className="w-10 h-10 text-primary" />
       </div>
       <h2 className="text-2xl font-black text-foreground uppercase tracking-wide text-center">
-        Selecciona un owner
+        {title}
       </h2>
       <p className="text-base text-muted-foreground mt-2 mb-8 text-center max-w-md">
-        Los productos están organizados por owner. Elige uno para ver y gestionar su catálogo.
+        {description}
       </p>
 
       {activeOwners.length > 0 && (

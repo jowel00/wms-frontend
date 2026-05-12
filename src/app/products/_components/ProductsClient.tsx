@@ -4,7 +4,7 @@ import { useState, useOptimistic, useTransition, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Package, Plus } from 'lucide-react';
-import { OwnerGate } from './OwnerGate';
+import { OwnerGate } from '@/components/ui/owner-gate';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { OwnerSelect } from '@/components/ui/owner-select';
@@ -120,7 +120,14 @@ export function ProductsClient({
     });
   }
 
-  if (!initialOwnerFilter) return <OwnerGate owners={owners} />;
+  if (!initialOwnerFilter) return (
+    <OwnerGate
+      owners={owners}
+      title="Selecciona un owner"
+      description="Los productos están organizados por owner. Elige uno para ver y gestionar su catálogo."
+      extraParams={{ page: '1' }}
+    />
+  );
 
   return (
     <div className="space-y-4">

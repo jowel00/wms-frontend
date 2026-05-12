@@ -7,14 +7,8 @@ import { Layers, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { OwnerGate } from '@/components/ui/owner-gate';
+import { OwnerSelect } from '@/components/ui/owner-select';
 import { buildParams } from '@/src/lib/url';
 import { LotsTable } from './LotsTable';
 import { createLot } from '@/src/app/actions/lots';
@@ -48,10 +42,6 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
     router.push(`${pathname}?${buildParams(params)}`);
   }
 
-  function handleOwnerChange(id: string) {
-    pushParams({ ownerId: id });
-  }
-
   function handleCreate(data: LotFormValues) {
     const temp: Lot = {
       lotId: `opt-${Date.now()}`,
@@ -75,72 +65,47 @@ function LotsClientInner({ owners, lots, products, ownerId }: LotsClientProps) {
     });
   }
 
-  const selectedOwner = owners.find((o) => o.ownerId === ownerId);
+  if (!ownerId) {
+    return (
+      <OwnerGate
+        owners={owners}
+        title="Selecciona un owner"
+        description="Los lotes están organizados por owner. Elige uno para ver y gestionar sus lotes de inventario."
+      />
+    );
+  }
 
   return (
     <>
-      {/* Selector de owner */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-            Owner
-          </label>
-          <Select value={ownerId || undefined} onValueChange={handleOwnerChange}>
-            <SelectTrigger
-              className={cn(
-                'w-64 h-16 text-base font-semibold',
-                !ownerId && 'border-primary border-2 text-primary'
-              )}
-            >
-              <SelectValue placeholder="↓ Selecciona un owner" />
-            </SelectTrigger>
-            <SelectContent>
-              {owners.map((o) => (
-                <SelectItem key={o.ownerId} value={o.ownerId} className="text-base py-3">
-                  {o.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex items-center gap-3 mb-5">
+        <OwnerSelect
+          owners={owners}
+          value={ownerId}
+          onChange={(id) => pushParams({ ownerId: id || undefined })}
+          className="w-56"
+        />
+        <span className="text-xs text-muted-foreground">
+          {optimisticLots.length} {optimisticLots.length === 1 ? 'lote' : 'lotes'}
+        </span>
+        <Button
+          onClick={() => setDialogOpen(true)}
+          className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
+          size="lg"
+        >
+          <Plus className="h-5 w-5" />
+          Nuevo lote
+        </Button>
       </div>
 
-      {!ownerId ? (
+      {optimisticLots.length === 0 ? (
         <EmptyState
           icon={Layers}
-          title="Selecciona un owner"
-          description="Elige el owner para ver y gestionar sus lotes de inventario."
+          title="Sin lotes registrados"
+          description="Este owner aún no tiene lotes. Crea el primero para comenzar."
+          action={{ label: '+ Crear el primero', onClick: () => setDialogOpen(true) }}
         />
       ) : (
-        <>
-          <div className="flex items-center gap-3 mb-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              {selectedOwner?.name ?? 'Lotes'}
-              <span className="ml-2 font-normal normal-case tracking-normal">
-                ({optimisticLots.length})
-              </span>
-            </p>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="ml-auto h-14 px-6 text-base font-bold uppercase tracking-wider gap-2"
-              size="lg"
-            >
-              <Plus className="h-5 w-5" />
-              Nuevo lote
-            </Button>
-          </div>
-
-          {optimisticLots.length === 0 ? (
-            <EmptyState
-              icon={Layers}
-              title="Sin lotes registrados"
-              description="Este owner aún no tiene lotes. Crea el primero para comenzar."
-              action={{ label: '+ Crear el primero', onClick: () => setDialogOpen(true) }}
-            />
-          ) : (
-            <LotsTable lots={optimisticLots} products={products} />
-          )}
-        </>
+        <LotsTable lots={optimisticLots} products={products} />
       )}
 
       <LotDialog
