@@ -134,3 +134,33 @@ export interface BulkUploadResponse {
   message: string;
   productsCreated: number;     // era "count" — nombre correcto del backend
 }
+
+// ─── InventoryEvent ───────────────────────────────────────────────────────────
+// Refleja InventoryEventResponse — GET /api/v1/inventory/events?containerId=
+// Backend usa @JsonInclude(NON_NULL): campos opcionales llegan omitidos si son null
+export type EventType =
+  | 'RECEIVED'
+  | 'PUTAWAY'
+  | 'MOVE'
+  | 'REBOX'
+  | 'ADJUST'
+  | 'CLOSED_CONTAINER'
+  | 'QUARANTINE'
+  | 'RELEASE_QUARANTINE';
+
+export interface InventoryEvent {
+  eventId: string;              // UUID
+  ownerId: string;              // UUID
+  warehouseId: string;          // UUID
+  eventType: EventType;
+  containerId: string;          // UUID
+  containerlineId: string | null;
+  productId: string | null;
+  lotId: string | null;
+  fromLocationId: string | null;
+  toLocationId: string | null;
+  quantity: number;
+  reason: string;
+  actorId: string;              // UUID
+  createdAt: string;            // Instant → ISO-8601 string
+}
