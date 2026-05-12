@@ -90,7 +90,7 @@ export interface InventoryContainer {
   ownerId: string;            // UUID
   warehouseId: string;        // UUID
   locationId: string | null;  // null cuando status === CREATED (antes del PUTAWAY)
-  type: string;               // uppercase: "BOX" | "TOTE" | "PALLET"
+  type: ContainerType;
   status: ContainerStatus;
 }
 

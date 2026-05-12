@@ -8,10 +8,10 @@ async function throwIfError(res: Response): Promise<void> {
   }
 }
 
-// GET /api/v1/inventory-containers/{containerId}/lines
+// GET /api/v1/inventory/containers/{containerId}/lines
 export async function fetchContainerLines(containerId: string): Promise<ContainerLine[]> {
   const res = await fetch(
-    `${apiUrl()}/inventory-containers/${containerId}/lines`,
+    `${apiUrl()}/inventory/containers/${containerId}/lines`,
     { cache: 'no-store' }
   );
   await throwIfError(res);
