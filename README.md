@@ -23,6 +23,7 @@
 ### Pre-requisitos
 
 - **Node.js 20+**
+- **pnpm 11+** — `npm install -g pnpm@latest`
 - Backend **wms-core** corriendo en `http://localhost:8080`
 
 ### Instalación
@@ -30,7 +31,7 @@
 ```bash
 git clone <URL-del-repo>
 cd wms-frontend
-npm install
+pnpm install
 ```
 
 ### Configuración de Entorno
@@ -44,14 +45,14 @@ cp .env.example .env.local
 ### Desarrollo
 
 ```bash
-npm run dev   # http://localhost:3000
+pnpm dev   # http://localhost:3000
 ```
 
 ### Build de producción
 
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 ---
