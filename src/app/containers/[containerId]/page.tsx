@@ -16,19 +16,18 @@ interface PageProps {
 }
 
 export default async function ContainerDetailPage({ params, searchParams }: PageProps) {
-  const { containerId } = await params;
-  const { ownerId, warehouseId, type } = await searchParams;
+  const [{ containerId }, { ownerId, warehouseId, type }] = await Promise.all([params, searchParams]);
 
-  const container = await fetchContainerById(containerId).catch(() => null);
-  if (!container) notFound();
-
-  const [lines, productsData, allLots, locations, events] = await Promise.all([
+  const [container, lines, productsData, allLots, locations, events] = await Promise.all([
+    fetchContainerById(containerId).catch(() => null),
     fetchContainerLines(containerId).catch(() => []),
     ownerId ? fetchProducts({ ownerId, limit: 100, page: 1 }).catch(() => null) : Promise.resolve(null),
     fetchLots().catch(() => []),
     warehouseId ? fetchAllLocations(warehouseId).catch(() => []) : Promise.resolve([]),
     fetchInventoryEvents(containerId).catch(() => []),
   ]);
+
+  if (!container) notFound();
 
   const locationCode = container.location ?? 'Sin ubicar';
   const products = productsData?.data ?? [];
