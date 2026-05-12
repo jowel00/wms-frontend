@@ -44,6 +44,7 @@ export async function receiveContainer(data: {
   typeId: string;
   productId: string;
   quantity: number;
+  lot?: { lotId: string } | { batchCode: string; expiresAt: string; receivedAt: string };
 }): Promise<{ containerId: string; status: 'CREATED' }> {
   const res = await fetch(`${apiUrl()}/inventory/receive`, {
     method: 'POST',

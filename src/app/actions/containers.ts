@@ -9,7 +9,8 @@ import {
 } from '@/src/services/containerService';
 import { fetchContainerTypes } from '@/src/services/containerTypeService';
 import { fetchProducts } from '@/src/services/productService';
-import type { ContainerTypeItem, ProductListItem } from '@/src/types/inventory';
+import { fetchLots } from '@/src/services/lotService';
+import type { ContainerTypeItem, ProductListItem, Lot } from '@/src/types/inventory';
 import type { ActionResult } from '@/src/types/actions';
 
 export async function queryContainerTypes(): Promise<ContainerTypeItem[]> {
@@ -19,6 +20,11 @@ export async function queryContainerTypes(): Promise<ContainerTypeItem[]> {
 export async function queryLineProducts(ownerId: string): Promise<ProductListItem[]> {
   const result = await fetchProducts({ ownerId, limit: 100, page: 1 }).catch(() => null);
   return result?.data ?? [];
+}
+
+export async function queryProductLots(ownerId: string, productId: string): Promise<Lot[]> {
+  const all = await fetchLots().catch(() => []);
+  return all.filter((l) => l.ownerId === ownerId && l.productId === productId);
 }
 
 export async function receiveContainerAction(

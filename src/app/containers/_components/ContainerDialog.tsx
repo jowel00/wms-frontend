@@ -23,6 +23,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { queryContainerTypes, queryLineProducts } from '@/src/app/actions/containers';
 import { receiveSchema } from '@/src/lib/validations/containers';
+import { LotSection } from './LotSection';
+import type { LotPayload } from './LotSection';
 import type { ContainerTypeItem, ProductListItem } from '@/src/types/inventory';
 import type { ReceiveFormValues } from '@/src/lib/validations/containers';
 
@@ -46,25 +48,36 @@ export function ContainerDialog({
   lockedWarehouseName,
 }: ContainerDialogProps) {
   const [containerTypes, setContainerTypes] = useState<ContainerTypeItem[]>([]);
-  const [products, setProducts] = useState<ProductListItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts]             = useState<ProductListItem[]>([]);
+  const [loading, setLoading]               = useState(false);
 
-  const [selectedTypeId, setSelectedTypeId] = useState('');
+  const [selectedTypeId, setSelectedTypeId]       = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [quantity, setQuantity]                   = useState('');
+  const [lot, setLot]                             = useState<LotPayload | null>(null);
+  const [validationError, setValidationError]     = useState<string | null>(null);
+
+  const selectedProduct = products.find((p) => p.productId === selectedProductId);
+  const hasExpiration   = selectedProduct?.hasExpiration ?? false;
 
   useEffect(() => {
     if (!open) return;
     setSelectedTypeId('');
     setSelectedProductId('');
     setQuantity('');
+    setLot(null);
     setValidationError(null);
     setLoading(true);
     Promise.all([queryContainerTypes(), queryLineProducts(lockedOwnerId)])
       .then(([types, prods]) => { setContainerTypes(types); setProducts(prods); })
       .finally(() => setLoading(false));
   }, [open, lockedOwnerId]);
+
+  function handleProductChange(val: string) {
+    setSelectedProductId(val);
+    setLot(null);
+    setValidationError(null);
+  }
 
   function handleSubmit() {
     setValidationError(null);
@@ -74,6 +87,7 @@ export function ContainerDialog({
       typeId:      selectedTypeId,
       productId:   selectedProductId,
       quantity:    Number(quantity),
+      lot:         hasExpiration ? (lot ?? undefined) : undefined,
     });
     if (!parsed.success) {
       setValidationError(parsed.error.issues[0].message);
@@ -83,7 +97,11 @@ export function ContainerDialog({
     onOpenChange(false);
   }
 
-  const isReady = !!selectedTypeId && !!selectedProductId && Number(quantity) >= 1;
+  const isReady =
+    !!selectedTypeId &&
+    !!selectedProductId &&
+    Number(quantity) >= 1 &&
+    (!hasExpiration || lot !== null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,7 +152,7 @@ export function ContainerDialog({
             </div>
           ) : (
             <>
-              {/* Tipo de contenedor — desde API */}
+              {/* Tipo de contenedor */}
               <div className="space-y-2">
                 <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   Tipo de contenedor
@@ -147,9 +165,7 @@ export function ContainerDialog({
                   <SelectTrigger className="h-14 text-base">
                     <SelectValue
                       placeholder={
-                        containerTypes.length === 0
-                          ? 'Sin tipos disponibles'
-                          : 'Selecciona el tipo'
+                        containerTypes.length === 0 ? 'Sin tipos disponibles' : 'Selecciona el tipo'
                       }
                     />
                   </SelectTrigger>
@@ -170,7 +186,7 @@ export function ContainerDialog({
                 </Label>
                 <Select
                   value={selectedProductId}
-                  onValueChange={setSelectedProductId}
+                  onValueChange={handleProductChange}
                   disabled={products.length === 0}
                 >
                   <SelectTrigger className="h-14 text-base">
@@ -186,12 +202,28 @@ export function ContainerDialog({
                     {products.map((p) => (
                       <SelectItem key={p.productId} value={p.productId} className="text-base py-3">
                         <span className="font-semibold">{p.name}</span>
-                        <span className="ml-2 text-muted-foreground text-sm font-mono">{p.sellerSku}</span>
+                        <span className="ml-2 text-muted-foreground text-sm font-mono">
+                          {p.sellerSku}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Lote — solo si el producto requiere fecha de vencimiento */}
+              {hasExpiration && (
+                <div className="space-y-4 rounded-lg border border-dashed p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Información de Lote
+                  </p>
+                  <LotSection
+                    ownerId={lockedOwnerId}
+                    productId={selectedProductId}
+                    onChange={setLot}
+                  />
+                </div>
+              )}
 
               {/* Cantidad */}
               <div className="space-y-2">
