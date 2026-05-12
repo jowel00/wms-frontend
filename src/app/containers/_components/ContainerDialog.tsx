@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -38,6 +38,56 @@ interface ContainerDialogProps {
   lockedWarehouseName?: string;
 }
 
+type State = {
+  containerTypes: ContainerTypeItem[];
+  products: ProductListItem[];
+  loading: boolean;
+  selectedTypeId: string;
+  selectedProductId: string;
+  quantity: string;
+  lot: LotPayload | null;
+  validationError: string | null;
+};
+
+type Action =
+  | { type: 'OPEN' }
+  | { type: 'LOADED'; containerTypes: ContainerTypeItem[]; products: ProductListItem[] }
+  | { type: 'SELECT_TYPE'; typeId: string }
+  | { type: 'SELECT_PRODUCT'; productId: string }
+  | { type: 'SET_QUANTITY'; quantity: string }
+  | { type: 'SET_LOT'; lot: LotPayload | null }
+  | { type: 'SET_VALIDATION_ERROR'; error: string };
+
+const initialState: State = {
+  containerTypes: [],
+  products: [],
+  loading: false,
+  selectedTypeId: '',
+  selectedProductId: '',
+  quantity: '',
+  lot: null,
+  validationError: null,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'OPEN':
+      return { ...initialState, loading: true };
+    case 'LOADED':
+      return { ...state, loading: false, containerTypes: action.containerTypes, products: action.products };
+    case 'SELECT_TYPE':
+      return { ...state, selectedTypeId: action.typeId };
+    case 'SELECT_PRODUCT':
+      return { ...state, selectedProductId: action.productId, lot: null, validationError: null };
+    case 'SET_QUANTITY':
+      return { ...state, quantity: action.quantity, validationError: null };
+    case 'SET_LOT':
+      return { ...state, lot: action.lot };
+    case 'SET_VALIDATION_ERROR':
+      return { ...state, validationError: action.error };
+  }
+}
+
 export function ContainerDialog({
   open,
   onOpenChange,
@@ -47,40 +97,20 @@ export function ContainerDialog({
   lockedWarehouseId,
   lockedWarehouseName,
 }: ContainerDialogProps) {
-  const [containerTypes, setContainerTypes] = useState<ContainerTypeItem[]>([]);
-  const [products, setProducts]             = useState<ProductListItem[]>([]);
-  const [loading, setLoading]               = useState(false);
-
-  const [selectedTypeId, setSelectedTypeId]       = useState('');
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [quantity, setQuantity]                   = useState('');
-  const [lot, setLot]                             = useState<LotPayload | null>(null);
-  const [validationError, setValidationError]     = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { containerTypes, products, loading, selectedTypeId, selectedProductId, quantity, lot, validationError } = state;
 
   const selectedProduct = products.find((p) => p.productId === selectedProductId);
   const hasExpiration   = selectedProduct?.hasExpiration ?? false;
 
   useEffect(() => {
     if (!open) return;
-    setSelectedTypeId('');
-    setSelectedProductId('');
-    setQuantity('');
-    setLot(null);
-    setValidationError(null);
-    setLoading(true);
+    dispatch({ type: 'OPEN' });
     Promise.all([queryContainerTypes(), queryLineProducts(lockedOwnerId)])
-      .then(([types, prods]) => { setContainerTypes(types); setProducts(prods); })
-      .finally(() => setLoading(false));
+      .then(([types, prods]) => dispatch({ type: 'LOADED', containerTypes: types, products: prods }));
   }, [open, lockedOwnerId]);
 
-  function handleProductChange(val: string) {
-    setSelectedProductId(val);
-    setLot(null);
-    setValidationError(null);
-  }
-
   function handleSubmit() {
-    setValidationError(null);
     const parsed = receiveSchema.safeParse({
       ownerId:     lockedOwnerId,
       warehouseId: lockedWarehouseId,
@@ -90,7 +120,7 @@ export function ContainerDialog({
       lot:         hasExpiration ? (lot ?? undefined) : undefined,
     });
     if (!parsed.success) {
-      setValidationError(parsed.error.issues[0].message);
+      dispatch({ type: 'SET_VALIDATION_ERROR', error: parsed.error.issues[0].message });
       return;
     }
     onSubmit(parsed.data);
@@ -159,7 +189,7 @@ export function ContainerDialog({
                 </Label>
                 <Select
                   value={selectedTypeId}
-                  onValueChange={setSelectedTypeId}
+                  onValueChange={(typeId) => dispatch({ type: 'SELECT_TYPE', typeId })}
                   disabled={containerTypes.length === 0}
                 >
                   <SelectTrigger className="h-14 text-base">
@@ -186,7 +216,7 @@ export function ContainerDialog({
                 </Label>
                 <Select
                   value={selectedProductId}
-                  onValueChange={handleProductChange}
+                  onValueChange={(productId) => dispatch({ type: 'SELECT_PRODUCT', productId })}
                   disabled={products.length === 0}
                 >
                   <SelectTrigger className="h-14 text-base">
@@ -220,7 +250,7 @@ export function ContainerDialog({
                   <LotSection
                     ownerId={lockedOwnerId}
                     productId={selectedProductId}
-                    onChange={setLot}
+                    onChange={(lot) => dispatch({ type: 'SET_LOT', lot })}
                   />
                 </div>
               )}
@@ -234,7 +264,7 @@ export function ContainerDialog({
                   type="number"
                   min={1}
                   value={quantity}
-                  onChange={(e) => { setQuantity(e.target.value); setValidationError(null); }}
+                  onChange={(e) => dispatch({ type: 'SET_QUANTITY', quantity: e.target.value })}
                   placeholder="Ej: 50"
                   className="h-14 text-base"
                 />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown, AlertTriangle } from 'lucide-react';
@@ -89,8 +89,8 @@ export function WarehouseDialog({
     !warehouse &&
     (warehouseCountByOwner[selectedOwnerId] ?? 0) >= MAX_WAREHOUSES_PER_OWNER;
 
-  useEffect(() => {
-    if (open) {
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
       form.reset({
         name: warehouse?.name ?? '',
         city: warehouse?.city ?? '',
@@ -99,7 +99,8 @@ export function WarehouseDialog({
       });
       setCityOpen(false);
     }
-  }, [open, warehouse, form]);
+    onOpenChange(nextOpen);
+  }
 
   function handleSubmit(data: WarehouseFormValues) {
     if (ownerAtLimit) return;
@@ -108,7 +109,7 @@ export function WarehouseDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">

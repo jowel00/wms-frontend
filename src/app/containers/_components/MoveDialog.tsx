@@ -49,13 +49,14 @@ export function MoveDialog({
   // Excluye el bin actual del contenedor
   const locationMap = new Map(locations.map((l) => [l.locationId, l]));
   const binOptions = locations
-    .filter((l) => l.type === 'BIN' && l.active && l.locationId !== container?.locationId)
-    .map((bin) => {
-      const rack  = bin.parentLocationId ? locationMap.get(bin.parentLocationId) : undefined;
+    .reduce<{ locationId: string; label: string }[]>((acc, l) => {
+      if (l.type !== 'BIN' || !l.active || l.locationId === container?.locationId) return acc;
+      const rack  = l.parentLocationId ? locationMap.get(l.parentLocationId) : undefined;
       const aisle = rack?.parentLocationId ? locationMap.get(rack.parentLocationId) : undefined;
-      const path  = [aisle?.code, rack?.code, bin.code].filter(Boolean).join(' › ');
-      return { locationId: bin.locationId, label: path || bin.code };
-    })
+      const path  = [aisle?.code, rack?.code, l.code].filter(Boolean).join(' › ');
+      acc.push({ locationId: l.locationId, label: path || l.code });
+      return acc;
+    }, [])
     .sort((a, b) => a.label.localeCompare(b.label));
 
   // Etiqueta del bin actual
